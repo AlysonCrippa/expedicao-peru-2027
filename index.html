@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expedição Peru 2027 - Planejador Interativo de Viagem</title>
+    <!-- Palette: Warm Andes - Warm stone (#fafaf9), Inca Gold (#d97706), Terracotta (#c2410c), Glacier Teal (#0d9488), Deep Slate (#334155) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #fafaf9;
+            color: #1c1917;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 320px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 360px;
+            }
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        i.ico { display: inline-flex; align-items: center; justify-content: center; font-style: normal; line-height: 1; }
+        i.ico svg { width: 1.05em; height: 1.05em; flex-shrink: 0; }
+        label:has(input.prep-check:checked) span { text-decoration: line-through; color: #a8a29e; }
+        .scene-bg svg { display: block; width: 100%; height: 100%; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-stone-50 text-stone-800">
+
+    <header class="bg-stone-900 text-stone-100 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('itinerary')">
+                    <div class="bg-amber-600 text-white p-2.5 rounded-xl shadow-lg">
+                        <i class="fa-solid fa-mountain-sun text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-tight text-amber-400 block leading-tight">EXPEDIÇÃO PERU 2027</span>
+                        <span class="text-xs text-stone-400 block">22/05 – 02/06/2027 • Roteiro Interativo</span>
+                    </div>
+                </div>
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1 lg:space-x-2">
+                    <button onclick="switchTab('itinerary')" id="nav-itinerary" class="px-3.5 py-2 rounded-lg text-sm font-semibold transition-all bg-amber-600 text-white shadow-sm">
+                        <i class="fa-solid fa-route mr-1.5"></i>1. Roteiro Interativo
+                    </button>
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-all text-stone-300 hover:text-white hover:bg-stone-800">
+                        <i class="fa-solid fa-chart-pie mr-1.5"></i>2. Visão Geral & Altitude
+                    </button>
+                    <button onclick="switchTab('budget')" id="nav-budget" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-all text-stone-300 hover:text-white hover:bg-stone-800">
+                        <i class="fa-solid fa-calculator mr-1.5"></i>3. Orçamento & Custos
+                    </button>
+                    <button onclick="switchTab('feasibility')" id="nav-feasibility" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-all text-stone-300 hover:text-white hover:bg-stone-800">
+                        <i class="fa-solid fa-layer-group mr-1.5"></i>4. Triagem de Extras
+                    </button>
+                    <button onclick="switchTab('guide')" id="nav-guide" class="px-3.5 py-2 rounded-lg text-sm font-medium transition-all text-stone-300 hover:text-white hover:bg-stone-800">
+                        <i class="fa-solid fa-heart-pulse mr-1.5"></i>5. Dicas & Documentação
+                    </button>
+                </nav>
+                <div class="md:hidden">
+                    <button onclick="toggleMobileMenu()" class="text-stone-300 hover:text-white p-2 rounded-lg">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-stone-900 border-t border-stone-800 px-4 pt-2 pb-4 space-y-2">
+            <button onclick="switchTab('itinerary'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-white bg-amber-600">
+                <i class="fa-solid fa-route w-6"></i>1. Roteiro Interativo
+            </button>
+            <button onclick="switchTab('dashboard'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-stone-300 hover:bg-stone-800">
+                <i class="fa-solid fa-chart-pie w-6"></i>2. Visão Geral & Altitude
+            </button>
+            <button onclick="switchTab('budget'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-stone-300 hover:bg-stone-800">
+                <i class="fa-solid fa-calculator w-6"></i>3. Orçamento & Custos
+            </button>
+            <button onclick="switchTab('feasibility'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-stone-300 hover:bg-stone-800">
+                <i class="fa-solid fa-layer-group w-6"></i>4. Triagem de Extras
+            </button>
+            <button onclick="switchTab('guide'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-stone-300 hover:bg-stone-800">
+                <i class="fa-solid fa-heart-pulse w-6"></i>5. Dicas & Documentação
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <section id="tab-itinerary" class="space-y-8">
+            <!-- Header Banner -->
+            <div class="bg-gradient-to-r from-stone-900 via-stone-800 to-amber-950 text-white p-6 md:p-8 rounded-2xl shadow-lg border border-amber-500/20">
+                <div class="max-w-3xl">
+                    <span class="text-amber-400 font-bold text-xs uppercase tracking-widest block mb-1">
+                        <i class="fa-solid fa-calendar-days mr-1.5"></i> Cronograma Oficial Dia a Dia
+                    </span>
+                    <h1 class="text-2xl md:text-4xl font-extrabold text-white mb-3 tracking-tight">Roteiro Interativo da Expedição Peru 2027</h1>
+                    <p class="text-stone-300 leading-relaxed text-sm md:text-base">
+                        Explore abaixo o itinerário cronológico completo de 10 dias. Cada cartão exibe a fotografia fiel da atração correspondente, acompanhado de horários estratégicos com menor fluxo de pessoas, logística de transporte e custos por pessoa.
+                    </p>
+                </div>
+
+                <!-- Quick Day Jump Bar -->
+                <div class="mt-6 pt-6 border-t border-stone-800">
+                    <span class="text-xs font-semibold text-stone-400 uppercase tracking-wider block mb-3">Atalho Cronológico para os Dias:</span>
+                    <div class="grid grid-cols-5 sm:grid-cols-10 gap-2">
+                        <button onclick="scrollToDay(1)" class="py-2 px-1 bg-stone-800 hover:bg-amber-600 border border-stone-700 hover:border-amber-500 text-white rounded-lg text-center transition-all">
+                            <span class="block text-[10px] text-amber-400 font-bold uppercase">D1</span>
+                            <span class="block text-xs font-semibold">23/05</span>
+                        </button>
+                        <button onclick="scrollToDay(2)" class="py-2 px-1 bg-stone-800 hover:bg-amber-600 border border-stone-700 hover:border-amber-500 text-white rounded-lg text-center transition-all">
+                            <span class="block text-[10px] text-amber-400 font-bold uppercase">D2</span>
+                            <span class="block text-xs font-semibold">24/05</span>
+                        </button>
+                        <button onclick="scrollToDay(3)" class="py-2 px-1 bg-stone-800 hover:bg-amber-600 border border-stone-700 hover:border-amber-500 text-white rounded-lg text-center transition-all">
+                            <span class="block text-[10px] text-amber-400 font-bold uppercase">D3</span>
+                            <span class="block text-xs font-semibold">25/05</span>
+                        </button>
+                        <button onclick="scrollToDay(4)" class="py-2 px-1 bg-stone-800 hover:bg-amber-600 border border-stone-700 hover:border-amber-500 text-white rounded-lg text-center transition-all">
+                            <span class="block text-[10px] text-amber-400 font-bold uppercase">D4</span>
+                            <span class="block text-xs font-semibold">26/05</span>
+                        </button>
+                        <button onclick="scrollToDay(5)" class="py-2 px-1 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-center transition-all shadow-md">
+                            <span class="block text-[10px] text-amber-200 font-extrabold uppercase">D5 ★</span>
+                            <span class="block text-xs font-semibold">27/05</span>
+                        </button>
+                        <button onclick="scrollToDay(6)" class="py-2 px-1 bg-teal-700 hover:bg-teal-600 text-white rounded-lg text-center transition-all shadow-md">
+                            <span class="block text-[10px] text-teal-200 font-extrabold uppercase">D6 ★</span>
+                            <span class="block text-xs font-semibold">28/05</span>
+                        </button>
+                        <button onclick="scrollToDay(7)" class="py-2 px-1 bg-stone-800 hover:bg-amber-600 border border-stone-700 hover:border-amber-500 text-white rounded-lg text-center transition-all">
+                            <span class="block text-[10px] text-amber-400 font-bold uppercase">D7</span>
+                            <span class="block text-xs font-semibold">29/05</span>
+                        </button>
+                        <button onclick="scrollToDay(8)" class="py-2 px-1 bg-sky-800 hover:bg-sky-700 text-white rounded-lg text-center transition-all">
+                            <span class="block text-[10px] text-sky-300 font-bold uppercase">D8</span>
+                            <span class="block text-xs font-semibold">30/05</span>
+                        </button>
+                        <button onclick="scrollToDay(9)" class="py-2 px-1 bg-sky-800 hover:bg-sky-700 text-white rounded-lg text-center transition-all">
+                            <span class="block text-[10px] text-sky-300 font-bold uppercase">D9</span>
+                            <span class="block text-xs font-semibold">31/05</span>
+                        </button>
+                        <button onclick="scrollToDay(10)" class="py-2 px-1 bg-stone-800 hover:bg-amber-600 border border-stone-700 hover:border-amber-500 text-white rounded-lg text-center transition-all">
+                            <span class="block text-[10px] text-amber-400 font-bold uppercase">D10</span>
+                            <span class="block text-xs font-semibold">01/06</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters & Search Controls -->
+            <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                    <button onclick="filterItinerary('all')" id="btn-filter-all" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-amber-600 text-white shadow-sm">
+                        Todos os 10 Dias
+                    </button>
+                    <button onclick="filterItinerary('cusco')" id="btn-filter-cusco" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-stone-100 text-stone-600 hover:bg-stone-200">
+                        Cusco & Vale Sagrado
+                    </button>
+                    <button onclick="filterItinerary('mountain')" id="btn-filter-mountain" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-stone-100 text-stone-600 hover:bg-stone-200">
+                        Alta Montanha (Trek)
+                    </button>
+                    <button onclick="filterItinerary('coast')" id="btn-filter-coast" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-stone-100 text-stone-600 hover:bg-stone-200">
+                        Costa, Deserto & Lima
+                    </button>
+                </div>
+                <div class="relative w-full md:w-72">
+                    <input type="text" id="itinerary-search" onkeyup="searchItinerary()" placeholder="Buscar por passeio, atração ou cidade..." class="w-full pl-9 pr-4 py-2 text-xs bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-stone-400 text-xs"></i>
+                </div>
+            </div>
+
+            <!-- Container for Day Cards -->
+            <div id="itinerary-cards-container" class="space-y-6">
+                <!-- Injected dynamically via JS -->
+            </div>
+        </section>
+
+        <section id="tab-dashboard" class="hidden space-y-8">
+            <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 md:p-8 backdrop-blur-sm">
+                <div class="max-w-3xl">
+                    <span class="text-amber-700 font-semibold text-sm uppercase tracking-wider block mb-1">Painel Fisiológico & Financeiro Sintético</span>
+                    <h2 class="text-2xl md:text-3xl font-bold text-stone-900 mb-3">Visão Geral & Perfil Fisiológico de Altitude</h2>
+                    <p class="text-stone-600 leading-relaxed text-sm md:text-base">
+                        Esta visão sintetiza a curva de aclimatatação da expedição em comparação com a distribuição orçamentária dos custos por categoria individual.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Key Metrics Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-stone-500 mb-2">
+                        <span class="text-xs uppercase font-semibold">Duração em Solo</span>
+                        <i class="fa-regular fa-calendar-days text-amber-600"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl md:text-3xl font-bold text-stone-900">10 Dias</span>
+                        <span class="text-xs text-stone-500 block mt-1">+ 2 dias de trânsito aéreo</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-stone-500 mb-2">
+                        <span class="text-xs uppercase font-semibold">Altitude Máxima</span>
+                        <i class="fa-solid fa-mountain text-teal-600"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl md:text-3xl font-bold text-stone-900">5.400 m</span>
+                        <span class="text-xs text-teal-700 block mt-1 font-medium">Glaciar Quelccaya</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-stone-500 mb-2">
+                        <span class="text-xs uppercase font-semibold">Orçamento Individual</span>
+                        <i class="fa-solid fa-wallet text-amber-600"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl md:text-3xl font-bold text-amber-700" id="dash-total-brl">R$ 10.024</span>
+                        <span class="text-xs text-stone-500 block mt-1">≈ S/ 6.595 por pessoa</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between text-stone-500 mb-2">
+                        <span class="text-xs uppercase font-semibold">Principais Hubs</span>
+                        <i class="fa-solid fa-map-location-dot text-sky-600"></i>
+                    </div>
+                    <div>
+                        <span class="text-2xl md:text-3xl font-bold text-stone-900">4 Regiões</span>
+                        <span class="text-xs text-stone-500 block mt-1">Cusco, Vale, Ica & Lima</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Altitude Chart -->
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-stone-900">Perfil Interativo de Altitude (Aclimatação)</h3>
+                                <p class="text-xs text-stone-500">Progressão em V: minimiza soroche antes dos picos de 5.400m e 4.200m</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full">Fisiologia</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="altitudeChart"></canvas>
+                        </div>
+                    </div>
+                    <p class="text-xs text-stone-500 italic mt-4 border-t border-stone-100 pt-3">
+                        <i class="fa-solid fa-circle-info mr-1 text-amber-600"></i> O pernoite em Aguas Calientes (2.040 m) no Dia 4 proporciona recuperação metabólica crucial antes dos trekkings de alta montanha.
+                    </p>
+                </div>
+
+                <!-- Budget Chart -->
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-stone-900">Distribuição do Orçamento (Por Pessoa)</h3>
+                                <p class="text-xs text-stone-500">Consolidação de aéreos, passeios, trens, hospedagem e alimentação</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">Financeiro</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="budgetChart"></canvas>
+                        </div>
+                    </div>
+                    <p class="text-xs text-stone-500 italic mt-4 border-t border-stone-100 pt-3">
+                        <i class="fa-solid fa-hand-holding-dollar mr-1 text-emerald-600"></i> Valores em soles (S/), dólares (US$) e reais (R$), com câmbio de referência de 19/09/2026: 1 PEN = R$ 1,52 e 1 USD = R$ 5,12.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-budget" class="hidden space-y-8">
+            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+                <div class="max-w-3xl">
+                    <h2 class="text-xl font-bold text-stone-900 mb-2">Simulador e Consolidação Orçamentária</h2>
+                    <p class="text-stone-600 text-sm">
+                        Todos os custos operacionais estão discriminados estritamente **por pessoa** (individual). Utilize a calculadora abaixo para alternar os totais entre reais, soles e dólares ou simular o investimento consolidado do grupo ajustando o número de viajantes.
+                    </p>
+                </div>
+
+                <!-- Calculator Controls -->
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 bg-stone-50 p-4 rounded-xl border border-stone-200">
+                    <div>
+                        <label class="text-xs font-semibold text-stone-600 block mb-1">Número de Integrantes do Grupo:</label>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="changeGroupSize(-1)" class="w-8 h-8 rounded-lg bg-white border border-stone-300 font-bold text-stone-700 hover:bg-stone-100">-</button>
+                            <span id="group-size-val" class="font-bold text-stone-900 text-lg w-8 text-center">3</span>
+                            <button onclick="changeGroupSize(1)" class="w-8 h-8 rounded-lg bg-white border border-stone-300 font-bold text-stone-700 hover:bg-stone-100">+</button>
+                            <span class="text-xs text-stone-500 ml-2">(Contexto de grupo)</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-stone-600 block mb-1">Moeda de Visualização:</label>
+                        <select id="currency-select" onchange="updateCurrencyView()" class="w-full bg-white border border-stone-300 rounded-lg px-3 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-amber-500">
+                            <option value="BRL" selected>BRL (R$) - Real Brasileiro</option>
+                                                        <option value="PEN">PEN (S/) - Sol Peruano</option>
+                            <option value="USD">USD (US$) - Dólar Americano</option>
+                        </select>
+                    </div>
+                    <div class="flex flex-col justify-center">
+                        <span class="text-xs font-semibold text-stone-500">Câmbios de Referência:</span>
+                        <span class="text-xs text-stone-700 leading-relaxed">1 PEN (Sol) = R$ 1,52<br>1 USD (Dólar) = R$ 5,12<br>1 USD = S/ 3,37 <span class="text-stone-500">(19/09/2026)</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grand Totals -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gradient-to-br from-amber-600 to-amber-700 text-white p-6 rounded-2xl shadow-md">
+                    <span class="text-xs font-bold uppercase tracking-wider text-amber-200 block mb-1">CUSTO INDIVIDUAL TOTAL (POR PESSOA)</span>
+                    <div class="text-3xl md:text-4xl font-extrabold" id="calc-indiv-total">R$ 10.024,64</div>
+                    <p class="text-xs text-amber-100 mt-2">Inclui aéreos internacionais/domésticos, todos os ingressos, trens, passeios privativos, 9 noites de hospedagem e alimentação estimada.</p>
+                </div>
+
+                <div class="bg-stone-800 text-white p-6 rounded-2xl shadow-md">
+                    <span class="text-xs font-bold uppercase tracking-wider text-stone-400 block mb-1">ORÇAMENTO DO GRUPO CONSOLIDADO (<span id="calc-group-label">3</span> PESSOAS)</span>
+                    <div class="text-3xl md:text-4xl font-extrabold text-amber-400" id="calc-group-total">R$ 30.073,92</div>
+                    <p class="text-xs text-stone-400 mt-2">Soma total do grupo para facilitar compras conjuntas e reserva de vans/guias privativos.</p>
+                </div>
+            </div>
+
+            <!-- Budget Table -->
+            <div class="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 bg-stone-100 border-b border-stone-200 flex items-center justify-between">
+                    <h3 class="font-bold text-stone-900">Discriminação Detalhada de Custos por Categoria</h3>
+                    <span class="text-xs text-stone-500">Valores unitários por pessoa</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs md:text-sm">
+                        <thead class="bg-stone-50 text-stone-600 border-b border-stone-200 uppercase font-semibold">
+                            <tr>
+                                <th class="py-3 px-6">Categoria / Item</th>
+                                <th class="py-3 px-6">Descrição / Observações Logísticas</th>
+                                <th class="py-3 px-6 text-right whitespace-nowrap">Valor em Soles (S/)</th>
+                                <th class="py-3 px-6 text-right whitespace-nowrap">Valor em Dólar (US$)</th>
+                                <th class="py-3 px-6 text-right whitespace-nowrap">Valor por Pessoa (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-stone-100 text-stone-700" id="budget-table-body">
+                            <!-- Injected via JS -->
+                        </tbody>
+                        <tfoot class="bg-stone-100 border-t-2 border-stone-300 font-extrabold text-stone-900" id="budget-table-foot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-feasibility" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+                <h2 class="text-xl font-bold text-stone-900 mb-2">Matriz de Viabilidade Logística (Atividades Secundárias)</h2>
+                <p class="text-stone-600 text-sm">
+                    Abaixo apresenta-se a análise técnica de viabilidade para as atrações anotadas no planejamento inicial, justificando o que foi incorporado e o que foi descartado por motivos logísticos.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Approved Extras -->
+                <div class="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center space-x-3 text-emerald-800">
+                        <i class="fa-solid fa-circle-check text-2xl"></i>
+                        <h3 class="font-bold text-lg">Atrações Extras Aprovadas e Incluídas</h3>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-stone-900">Islas Ballestas (Paracas)</span>
+                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded">Dia 8 • Costeiro</span>
+                        </div>
+                        <p class="text-xs text-stone-600 leading-relaxed">
+                            <strong>Análise Técnica:</strong> Perfeita sinergia geográfica com o passeio de Buggy e Sandboard em Huacachina no Dia 8. Ambos situam-se no mesmo corredor viário da Rodovia Panamericana Sur.
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-stone-900">Ilhas Palomino (Nado com Leões-Marinhos)</span>
+                            <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded">Dia 9 • Pacífico</span>
+                        </div>
+                        <p class="text-xs text-stone-600 leading-relaxed">
+                            <strong>Análise Técnica:</strong> Atende ao desejo expresso do grupo por um passeio no Oceano Pacífico em Lima. Embarque pelo Porto de Callao com duração de 4 horas pela manhã.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Rejected Extras -->
+                <div class="bg-rose-50/50 border border-rose-200 rounded-2xl p-6 space-y-4">
+                    <div class="flex items-center space-x-3 text-rose-800">
+                        <i class="fa-solid fa-circle-xmark text-2xl"></i>
+                        <h3 class="font-bold text-lg">Atrações Reprovadas (Inviabilidade Técnica)</h3>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-rose-100 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-stone-900">Lago Titicaca (Isla Uros + Taquile)</span>
+                            <span class="px-2 py-0.5 bg-rose-100 text-rose-800 text-xs font-bold rounded">Puno</span>
+                        </div>
+                        <p class="text-xs text-stone-600 leading-relaxed">
+                            <strong>Motivo do Descarte:</strong> Puno situa-se a 380 km de Cusco (7 horas de ônibus por trecho). Exigiria um mínimo de 2 dias inteiros dedicados, obrigando o cancelamento do Glaciar Quelccaya ou do circuito desértico.
+                        </p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border border-rose-100 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-stone-900">Escalera al Cielo & Laguna Vichaycocha</span>
+                            <span class="px-2 py-0.5 bg-rose-100 text-rose-800 text-xs font-bold rounded">Canta / Lima</span>
+                        </div>
+                        <p class="text-xs text-stone-600 leading-relaxed">
+                            <strong>Motivo do Descarte:</strong> Localizadas na serra alta de Lima (Canta/Carabayllo), demandam mais de 4 horas por trecho em estradas não pavimentadas. Incompatível com o tempo na capital e redundante frente aos trekkings andinos de Quelccaya e Humantay.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-guide" class="hidden space-y-8">
+            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
+                <h2 class="text-xl font-bold text-stone-900 mb-2">Guia Técnico Prático & Protocolos de Aclimatação</h2>
+                <p class="text-stone-600 text-sm">
+                    A altitude extrema (até 5.400 m) e a diversidade bioclimática do Peru exigem cuidados preventivos rigorosos com saúde, vestuário técnico e gestão de moeda local em espécie.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Soroche Protocol -->
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700 font-bold">
+                        <i class="fa-solid fa-heart-pulse"></i>
+                    </div>
+                    <h3 class="font-bold text-stone-900 text-base">Mitigação do Soroche (Altitude)</h3>
+                    <ul class="text-xs text-stone-600 space-y-2 list-disc pl-4 leading-relaxed">
+                        <li>Repouso absoluto horizontal nas primeiras 6 horas após o pouso em Cusco (3.399 m).</li>
+                        <li>Ingestão contínua de chá de coca ou muña (infusões locais).</li>
+                        <li>Refeições leves de fácil digestão (sopas de quinua) nos primeiros 2 dias.</li>
+                        <li>Uso preventivo de oxigênio medicinal e acetazolamida se recomendado por médico.</li>
+                    </ul>
+                </div>
+
+                <!-- Technical Gear -->
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center text-teal-700 font-bold">
+                        <i class="fa-solid fa-shirt"></i>
+                    </div>
+                    <h3 class="font-bold text-stone-900 text-base">Vestuário para Alta Montanha</h3>
+                    <ul class="text-xs text-stone-600 space-y-2 list-disc pl-4 leading-relaxed">
+                        <li>Sistema de 3 camadas: Segunda pele térmica, jaqueta fleece e casaco impermeável corta-vento.</li>
+                        <li>Botas de caminhada com garras de fixação (amaciadas previamente).</li>
+                        <li>Óculos de sol com proteção UV e protetor solar FPS 50+ (reflexo forte do gelo em Quelccaya).</li>
+                        <li>Luvas térmicas e touca para cobrir orelhas em temperaturas negativas (-5°C).</li>
+                    </ul>
+                </div>
+
+                <!-- Money & Cash -->
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-700 font-bold">
+                        <i class="fa-solid fa-money-bill-wave"></i>
+                    </div>
+                    <h3 class="font-bold text-stone-900 text-base">Gestão de Moeda em Espécie</h3>
+                    <ul class="text-xs text-stone-600 space-y-2 list-disc pl-4 leading-relaxed">
+                        <li>Portar obrigatoriamente <strong>S/ 300 a S/ 400 em notas pequenas de Soles (PEN)</strong>.</li>
+                        <li>Comunidades isoladas (Phinaya, Maras e Mollepata) não aceitam cartão nem caixas eletrônicos.</li>
+                        <li>Ingressos de Salineras de Maras (S/ 20) e Quelccaya (S/ 25) devem ser pagos em dinheiro na bilheteria local.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Documentação & Preparação -->
+            <div class="bg-stone-900 text-stone-100 p-6 rounded-2xl shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2"><i class="fa-solid fa-list-check"></i> Documentação e Preparação da Viagem</h2>
+                        <p class="text-stone-400 text-sm mt-1 max-w-2xl">Checklist do que levar e providenciar antes do embarque. Marque os itens conforme forem resolvidos.</p>
+                    </div>
+                    <div class="md:w-64">
+                        <div class="flex justify-between text-xs mb-1"><span class="text-stone-400">Progresso</span><span id="prep-progress-label" class="font-bold text-amber-400">0 de 32</span></div>
+                        <div class="h-2 bg-stone-700 rounded-full overflow-hidden"><div id="prep-progress-bar" class="h-full bg-amber-500 transition-all duration-300" style="width:0%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700 shrink-0"><i class="fa-solid fa-id-card"></i></div>
+                        <h3 class="font-bold text-stone-900 text-base">Documento de Identidade (obrigatório)</h3>
+                    </div>
+                    <ul class="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Brasileiros não precisam de visto para turismo. Entra-se com <strong>RG emitido há menos de 10 anos</strong>, em bom estado e com foto reconhecível, ou com a nova <strong>Carteira de Identidade Nacional (CIN)</strong>.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Alternativa: <strong>passaporte com validade mínima de 6 meses</strong> na data de entrada. É o documento mais seguro, especialmente para a conexão internacional.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">CNH, carteira de trabalho, título de eleitor e cópias autenticadas <strong>não são aceitos</strong>.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Ingresso de Machu Picchu e trem PeruRail são nominais: apresentar <strong>o mesmo documento usado na compra</strong>. Definir antes da compra qual documento cada um vai usar.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Guardar o registro eletrônico de entrada da imigração (Migraciones) até a saída do país.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Menores de idade sem um dos pais: autorização de viagem com firma reconhecida.</span></label></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-stone-200 rounded-xl flex items-center justify-center text-stone-700 shrink-0"><i class="fa-solid fa-folder-open"></i></div>
+                        <h3 class="font-bold text-stone-900 text-base">Documentos de Apoio</h3>
+                    </div>
+                    <ul class="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Passagens aéreas (ida, volta e voos domésticos LIM ⇄ CUZ) impressas e em PDF no celular.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Comprovantes de hospedagem das 9 noites.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Vouchers dos passeios: Quelccaya, Humantay, Paracas/Huacachina, Ilhas Palomino e vans privadas.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Ingresso de Machu Picchu (Circuito 2), bilhetes do trem e do ônibus Consettur.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Foto/cópia digital do RG ou passaporte salva em nuvem e enviada a um familiar.</span></label></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center text-rose-700 shrink-0"><i class="fa-solid fa-shield-heart"></i></div>
+                        <h3 class="font-bold text-stone-900 text-base">Seguro Viagem</h3>
+                    </div>
+                    <ul class="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Não é exigido para entrar no Peru, mas é <strong>altamente recomendado</strong> pelo roteiro em altitude e pelos trekkings.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Conferir se a apólice cobre <strong>atividades de aventura/trekking</strong> e qual é o <strong>limite de altitude</strong> coberto: o Glaciar Quelccaya chega a 5.200–5.400 m e algumas apólices excluem altitudes elevadas.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Verificar cobertura de remoção/evacuação médica, atraso de voo e extravio de bagagem.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Conferir se o cartão de crédito usado na compra das passagens já oferece seguro viagem.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Salvar no celular o telefone da central 24 h e o número da apólice.</span></label></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center text-sky-700 shrink-0"><i class="fa-solid fa-sim-card"></i></div>
+                        <h3 class="font-bold text-stone-900 text-base">Internet no Celular (eSIM ou Chip)</h3>
+                    </div>
+                    <ul class="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Opção 1: <strong>eSIM internacional</strong> comprado no Brasil, instalado antes do embarque e ativado ao pousar em Lima.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Opção 2: chip pré-pago local (Claro, Movistar, Entel ou Bitel), comprado no Peru mediante apresentação de documento.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Confirmar se o aparelho é <strong>compatível com eSIM e desbloqueado</strong>. O roaming da operadora brasileira costuma ser mais caro.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Baixar <strong>mapas offline</strong> (Google Maps) de Cusco, Vale Sagrado, Lima e Ica: não há sinal em Phinaya/Quelccaya e o sinal é fraco em Humantay.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Levar power bank carregado para os dias de trekking.</span></label></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center text-teal-700 shrink-0"><i class="fa-solid fa-syringe"></i></div>
+                        <h3 class="font-bold text-stone-900 text-base">Saúde e Vacinas</h3>
+                    </div>
+                    <ul class="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Não há vacina obrigatória para entrar no Peru. A de febre amarela só é recomendada para a região amazônica, que não faz parte do roteiro.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Consulta médica antes da viagem para avaliar prevenção do mal de altitude (ex.: acetazolamida) e levar receitas.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Farmácia básica: medicamentos de uso contínuo na embalagem original, analgésico, antidiarreico, soro de reidratação e protetor labial/solar FPS 50+.</span></label></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-700 shrink-0"><i class="fa-solid fa-credit-card"></i></div>
+                        <h3 class="font-bold text-stone-900 text-base">Dinheiro e Cartões</h3>
+                    </div>
+                    <ul class="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Cartão internacional de crédito e/ou cartão de conta global (menor IOF) como meio principal de pagamento.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Soles em espécie, em notas pequenas, para Maras, Phinaya e Mollepata (sem cartão nem caixa eletrônico).</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Preferir casas de câmbio no centro de Cusco ou em Miraflores; o câmbio no aeroporto costuma ser pior.</span></label></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-stone-200 rounded-xl flex items-center justify-center text-stone-700 shrink-0"><i class="fa-solid fa-plug"></i></div>
+                        <h3 class="font-bold text-stone-900 text-base">Tomadas e Eletrônicos</h3>
+                    </div>
+                    <ul class="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Voltagem de 220 V. Tomadas tipo A e C: o plugue brasileiro de 2 pinos redondos geralmente encaixa; levar <strong>adaptador universal</strong> para plugues de 3 pinos.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Óculos de sol, lanterna de cabeça (saída às 03:00 para Quelccaya) e garrafa reutilizável.</span></label></li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center text-amber-700 shrink-0"><i class="fa-solid fa-ticket"></i></div>
+                        <h3 class="font-bold text-stone-900 text-base">Reservas com Antecedência</h3>
+                    </div>
+                    <ul class="text-xs text-stone-600 space-y-2.5 leading-relaxed">
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Ingresso de Machu Picchu e trem PeruRail: comprar com <strong>4 a 6 meses</strong> de antecedência (vagas limitadas por circuito).</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Voos domésticos Lima ⇄ Cusco e a expedição privada ao Quelccaya.</span></label></li>
+                        <li><label class="flex items-start gap-2.5 cursor-pointer group"><input type="checkbox" class="prep-check mt-0.5 h-4 w-4 shrink-0 accent-amber-600 cursor-pointer" onchange="updatePrepProgress()"><span class="group-has-[:checked]:line-through group-has-[:checked]:text-stone-400">Boleto Turístico Integral (BTCI) pode ser comprado em Cusco na chegada.</span></label></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-900 flex gap-2.5">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+                <p>As regras de entrada podem mudar até maio de 2027. Confirmar os requisitos no site do Itamaraty (Embaixada do Brasil em Lima) e com a companhia aérea cerca de 30 dias antes do embarque.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="day-modal" class="fixed inset-0 bg-stone-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div id="modal-header" class="px-6 py-4 bg-stone-900 text-white flex items-center justify-between">
+                <div>
+                    <span id="modal-day-badge" class="text-xs font-bold text-amber-400 uppercase tracking-wider block"></span>
+                    <h3 id="modal-title" class="text-xl font-bold"></h3>
+                </div>
+                <button onclick="closeDayModal()" class="text-stone-400 hover:text-white p-2 text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6 custom-scrollbar flex-1" id="modal-body">
+                <!-- Injected via JavaScript -->
+            </div>
+            <div class="px-6 py-3 bg-stone-100 border-t border-stone-200 flex justify-end">
+                <button onclick="closeDayModal()" class="px-4 py-2 bg-stone-800 text-white text-xs font-bold rounded-lg hover:bg-stone-900">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-stone-900 text-stone-400 text-xs py-6 border-t border-stone-800 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p>Expedição Técnico-Logística ao Peru 2027 • Londrina - Lima - Cusco - Paracas - Ica</p>
+            <p class="text-stone-500">Documento de Planejamento Financeiro e Operacional Integrado.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // DATA STORE: 10 dias. Fotos resolvidas por local (arquivos verificados do Wikimedia Commons + busca na Wikipedia/Commons por nome do local)
+        const itineraryData = [
+            {
+                day: 1,
+                date: "23/05/2027 (Domingo)",
+                title: "Chegada a Cusco e Aclimatação em Qorikancha",
+                region: "cusco",
+                hub: "Cusco Centro Histórico",
+                altitude: "3.399 m",
+                category: "Aclimatação",
+                costPersonPEN: 30,
+                costPersonBRL: 45.6,
+                imgSources: {"files": [], "wiki": [["en", "Coricancha"], ["es", "Coricancha"], ["pt", "Coricancha"]], "commons": "Coricancha Cusco Santo Domingo"},
+                imgCaption: "Templo do Sol (Qorikancha) sob a arquitetura colonial de Cusco.",
+                quietHours: "Visitar Qorikancha entre 14:30 e 16:00 (menor fluxo de excursões).",
+                logistics: "Táxi executivo do aeroporto CUZ ao hotel central (20-30 min). Restante a pé.",
+                timeline: [
+                    { time: "08:30 - 09:30", desc: "Desembarque no Aeroporto de Cusco, retirada de bagagens e traslado ao hotel." },
+                    { time: "09:30 - 13:00", desc: "Check-in/guardaria de malas, repouso absoluto horizontal com chá de coca/muña." },
+                    { time: "13:00 - 14:30", desc: "Almoço leve digestivo (sopa de quinua/vegetais) no centro histórico." },
+                    { time: "14:30 - 17:00", desc: "Caminhada lenta ao Templo do Sol (Qorikancha), base inca sob o convento colonial." },
+                    { time: "17:00 - 18:30", desc: "Passagem pelo Mercado San Pedro para água e lanches." }
+                ],
+                costsDetail: "Traslado Aeroporto (S/ 15 = R$ 22,80) + Entrada Qorikancha (S/ 15 = R$ 22,80)."
+            },
+            {
+                day: 2,
+                date: "24/05/2027 (Segunda-feira)",
+                title: "Circuito Arqueológico Pericentral de Cusco",
+                region: "cusco",
+                hub: "Cusco",
+                altitude: "3.700 m",
+                category: "Aclimatação Ativa",
+                costPersonPEN: 197,
+                costPersonBRL: 299.44,
+                imgSources: {"files": ["Sacsayhuamán, Cusco, Perú, 2015-07-31, DD 05.JPG"], "wiki": [["en", "Sacsayhuamán"], ["es", "Sacsayhuamán"]], "commons": "Sacsayhuaman walls Cusco"},
+                imgCaption: "Muralhas megalíticas da fortaleza de Sacsayhuamán.",
+                quietHours: "Iniciar Sacsayhuamán impreterivelmente às 08:00 para antecipar ônibus de turismo.",
+                logistics: "Van executiva privada cobrindo a Rota dos Quatro Sítios (25 km total em asfalto).",
+                timeline: [
+                    { time: "07:30 - 08:00", desc: "Embarque em transporte privado com guia credenciado." },
+                    { time: "08:00 - 10:15", desc: "Visita guiada ao Parque de Sacsayhuamán (muralhas megalíticas em ziguezague)." },
+                    { time: "10:30 - 11:30", desc: "Exploração de Q'enqo (labirinto rochoso com altar de mumificação)." },
+                    { time: "11:45 - 12:45", desc: "Visita a Puka Pukara (fortaleza militar inca)." },
+                    { time: "13:00 - 14:00", desc: "Santuário de Tambomachay (fontes rituais de água)." },
+                    { time: "15:30 - 18:00", desc: "Caminhada pelo bairro artesanal de San Blas e ateliês." }
+                ],
+                costsDetail: "Boleto Turístico Integral BTCI (S/ 130 = R$ 197,60) + Guia/Van privada (S/ 67 = R$ 101,84)."
+            },
+            {
+                day: 3,
+                date: "25/05/2027 (Terça-feira)",
+                title: "Vale Sagrado I: Chinchero, Moray e Salineras de Maras",
+                region: "cusco",
+                hub: "Vale Sagrado",
+                altitude: "2.870 m",
+                category: "Cultura & Arqueologia",
+                costPersonPEN: 164,
+                costPersonBRL: 249.28,
+                imgSources: {"files": ["Salineras de Maras, Maras, Perú, 2015-07-30, DD 12.JPG"], "wiki": [["es", "Salineras de Maras"], ["en", "Maras salt mines"]], "commons": "Salineras de Maras"},
+                imgCaption: "Milhares de poços de evaporação de sal nas Salineras de Maras.",
+                quietHours: "Chegada a Chinchero às 08:15 evita aglomerações. Sol perpendicular em Moray às 11:00.",
+                logistics: "Van executiva privada (Cusco -> Chinchero -> Moray -> Maras -> Urubamba, ~95 km).",
+                timeline: [
+                    { time: "07:00 - 08:15", desc: "Deslocamento de Cusco até Chinchero (3.762 m)." },
+                    { time: "08:15 - 09:45", desc: "Sítio de Chinchero e oficina de interpretação têxtil tradicional com lã de alpaca." },
+                    { time: "10:15 - 11:45", desc: "Terraços agrícolas circulares de Moray (laboratório microclimático)." },
+                    { time: "12:15 - 13:45", desc: "Salineras de Maras (mais de 3.000 poços de sal artesanais)." },
+                    { time: "14:00 - 15:30", desc: "Almoço buffet andino em Urubamba e check-in em hotel no Vale." }
+                ],
+                costsDetail: "Entrada Maras (em dinheiro) (S/ 20 = R$ 30,40) + Almoço Buffet (S/ 60 = R$ 91,20) + Van/Guia (S/ 84 = R$ 127,68)."
+            },
+            {
+                day: 4,
+                date: "26/05/2027 (Quarta-feira)",
+                title: "Vale Sagrado II: Pisac, Ollantaytambo e Trem Vistadome",
+                region: "cusco",
+                hub: "Aguas Calientes",
+                altitude: "2.040 m",
+                category: "Transição & Trem",
+                costPersonPEN: 304,
+                costPersonBRL: 462.08,
+                imgSources: {"files": [], "wiki": [["en", "Ollantaytambo"], ["es", "Ollantaytambo"]], "commons": "Ollantaytambo terraces ruins"},
+                imgCaption: "Terraços agrícolas incas na fortaleza de Ollantaytambo.",
+                quietHours: "Fortaleza de Ollantaytambo calma após as 14:30 (excursões bate-volta já saíram).",
+                logistics: "Van matutina + Trem panorâmico Vistadome/Expedition da PeruRail (1h 40min).",
+                timeline: [
+                    { time: "07:30 - 10:00", desc: "Visita às ruínas altas de Pisac e mercado artesanal." },
+                    { time: "10:30 - 12:30", desc: "Deslocamento às margens do rio Urubamba até Ollantaytambo." },
+                    { time: "14:00 - 16:30", desc: "Parque Arqueológico de Ollantaytambo (Templo do Sol e rampas graníticas)." },
+                    { time: "17:30 - 19:10", desc: "Viagem de trem panorâmico até Aguas Calientes (Machu Picchu Pueblo)." }
+                ],
+                costsDetail: "Trem PeruRail Ollantaytambo → Aguas Calientes (S/ 253 = R$ 384,56) + Van privada (S/ 51 = R$ 77,52)."
+            },
+            {
+                day: 5,
+                date: "27/05/2027 (Quinta-feira)",
+                title: "Santuário Histórico de Machu Picchu (Circuito 2)",
+                region: "cusco",
+                hub: "Cusco",
+                altitude: "2.430 m",
+                category: "Destaque Mundial ★",
+                costPersonPEN: 581,
+                costPersonBRL: 883.12,
+                imgSources: {"files": ["Machu Picchu, Peru.jpg"], "wiki": [["en", "Machu Picchu"]], "commons": "Machu Picchu Huayna Picchu"},
+                imgCaption: "A icônica cidadela de Machu Picchu e a montanha Huayna Picchu.",
+                quietHours: "Primeiro turno das 06:00 oferece névoa mística dissipando e pouca gente.",
+                logistics: "Ônibus Consettur subida/descida + Trem PeruRail regresso + Van de Ollantaytambo a Cusco.",
+                timeline: [
+                    { time: "05:30 - 06:00", desc: "Embarque no ônibus ambiental Consettur subindo a rota Hiram Bingham." },
+                    { time: "06:30 - 10:30", desc: "Tour guiado no Circuito 2 Clássico (Casa do Guardião, Intihuatana, Templo do Sol)." },
+                    { time: "11:30 - 13:30", desc: "Almoço em Aguas Calientes e recolhimento de bagagem no hotel." },
+                    { time: "14:30 - 16:15", desc: "Trem de regresso até a Estação de Ollantaytambo." },
+                    { time: "16:30 - 18:30", desc: "Van executiva privada de Ollantaytambo até Cusco." }
+                ],
+                costsDetail: "Ingresso Machu Picchu Circuito 2 (S/ 163 = R$ 247,76) + Ônibus Consettur (S/ 81 = R$ 123,12) + Trem de volta (S/ 286 = R$ 434,72) + Van Ollantaytambo → Cusco (S/ 51 = R$ 77,52)."
+            },
+            {
+                day: 6,
+                date: "28/05/2027 (Sexta-feira)",
+                title: "Expedição de Alta Montanha: Glaciar Quelccaya (Suyuparina)",
+                region: "mountain",
+                hub: "Cusco / Canchis",
+                altitude: "5.400 m",
+                category: "Aventura Extrema ★",
+                costPersonPEN: 429,
+                costPersonBRL: 652.08,
+                imgSources: {"files": [], "wiki": [["en", "Quelccaya Ice Cap"], ["es", "Quelccaya"]], "commons": "Quelccaya glacier"},
+                imgCaption: "Paredões de gelo do Glaciar Quelccaya, na Cordilheira de Vilcanota.",
+                quietHours: "Fluxo turístico nulo o dia todo devido ao caráter isolado e remoto do glaciar.",
+                logistics: "Veículo 4x4 ou minibus especial de montanha (5h por trecho em rodovias e vicinais).",
+                timeline: [
+                    { time: "03:00 - 08:00", desc: "Saída madrugadora de Cusco via Pitumarca até Phinaya (4.700 m)." },
+                    { time: "08:00 - 09:00", desc: "Café da manhã reforçado em Phinaya e briefing de segurança com oxigênio." },
+                    { time: "09:45 - 12:30", desc: "Trilha de aproximação às muralhas de gelo e lagoa proglaciar de Quelccaya." },
+                    { time: "14:00 - 15:30", desc: "Parada de observação na isolada Laguna Sibinacocha (fauna andina)." },
+                    { time: "15:30 - 20:00", desc: "Retorno rodoviário à cidade de Cusco." }
+                ],
+                costsDetail: "Expedição Privada Quelccaya (guia/oxigênio/refeições) (S/ 404 = R$ 614,08) + Taxa Phinaya (S/ 25 = R$ 38,00)."
+            },
+            {
+                day: 7,
+                date: "29/05/2027 (Sábado)",
+                title: "Trekking à Laguna Humantay & Voo Noturno para Lima",
+                region: "mountain",
+                hub: "Lima",
+                altitude: "4.200 m",
+                category: "Alta Montanha & Voo",
+                costPersonPEN: 365,
+                costPersonBRL: 554.8,
+                imgSources: {"files": [], "wiki": [["es", "Laguna Humantay"], ["en", "Humantay Lake"], ["pt", "Lago Humantay"]], "commons": "Laguna Humantay"},
+                imgCaption: "Águas de cor esmeralda/turquesa na deslumbrante Laguna Humantay.",
+                quietHours: "Saída de Cusco às 04:30 garante subida antes da massa dos passeios convencionais.",
+                logistics: "Van de montanha + Voo doméstico a jato Cusco->Lima (1h 25min) + Traslado Miraflores.",
+                timeline: [
+                    { time: "04:30 - 07:30", desc: "Deslocamento de Cusco até Mollepata e café da manhã." },
+                    { time: "09:30 - 11:30", desc: "Ascensão íngreme de 3,5 km a pé de Soraypampa até a Laguna Humantay." },
+                    { time: "11:30 - 12:45", desc: "Contemplação das águas turquesa aos pés do nevado Salkantay." },
+                    { time: "15:30 - 18:00", desc: "Regresso a Cusco e direcionamento direto ao aeroporto." },
+                    { time: "20:30 - 21:55", desc: "Voo doméstico Cusco -> Lima e traslado ao hotel em Miraflores." }
+                ],
+                costsDetail: "Tour Humantay (S/ 118 = R$ 179,36) + Taxa Mollepata (S/ 20 = R$ 30,40) + Voo CUZ → LIM (S/ 202 = R$ 307,04) + Traslado Lima (S/ 25 = R$ 38,00)."
+            },
+            {
+                day: 8,
+                date: "30/05/2027 (Domingo)",
+                title: "Circuito Costeiro: Paracas, Islas Ballestas & Huacachina",
+                region: "coast",
+                hub: "Lima / Ica",
+                altitude: "Nível do Mar",
+                category: "Mar & Deserto",
+                costPersonPEN: 302,
+                costPersonBRL: 459.04,
+                imgSources: {"files": [], "wiki": [["en", "Huacachina"], ["es", "Huacachina"]], "commons": "Huacachina oasis dunes"},
+                imgCaption: "O icônico oásis de Huacachina, rodeado por dunas de areia gigantes.",
+                quietHours: "Embarque marítimo às 08:00 evita ventos fortes ('paracas') e mar agitado.",
+                logistics: "Van executiva privada (600 km rodados total no dia) + Lancha rápida + Buggy 4x4.",
+                timeline: [
+                    { time: "04:30 - 08:00", desc: "Trânsito pela Rodovia Panamericana Sur até a marina de Paracas." },
+                    { time: "08:00 - 10:00", desc: "Lancha rápida para as Islas Ballestas (geoglifo O Candelabro e leões-marinhos)." },
+                    { time: "10:30 - 12:00", desc: "Traslado ao Oásis de Huacachina em Ica (75 km)." },
+                    { time: "16:00 - 18:00", desc: "Passeio de Buggy nas dunas, Sandboard e pôr do sol no deserto." },
+                    { time: "18:30 - 22:30", desc: "Viagem de retorno ao hotel em Miraflores." }
+                ],
+                costsDetail: "Tour Paracas + Huacachina (S/ 286 = R$ 434,72) + Taxa Ambiental SERNANP (S/ 16 = R$ 24,32)."
+            },
+            {
+                day: 9,
+                date: "31/05/2027 (Segunda-feira)",
+                title: "Oceano Pacífico: Nado com Leões-Marinhos nas Ilhas Palomino",
+                region: "coast",
+                hub: "Lima / Callao",
+                altitude: "Nível do Mar",
+                category: "Oceano & Gastronomia",
+                costPersonPEN: 269,
+                costPersonBRL: 408.88,
+                imgSources: {"files": [], "wiki": [["es", "Islas Palomino"], ["en", "Palomino Islands"]], "commons": "Palomino islands sea lions", "wikiLast": [["en", "South American sea lion"]]},
+                imgCaption: "Colônia massiva de Leões-Marinhos em seu habitat nas Ilhas Palomino.",
+                quietHours: "Saída das 09:00 no Porto de Callao é técnica para menor ondulação da baía de Lima.",
+                logistics: "Van do operador marítimo + Navegação em iate com roupa de neoprene + Táxis urbanos.",
+                timeline: [
+                    { time: "08:00 - 08:45", desc: "Traslado de Miraflores ao Porto de Callao (La Punta)." },
+                    { time: "09:00 - 13:00", desc: "Navegação até Ilhas Palomino e nado guiado em alto-mar com leões-marinhos." },
+                    { time: "14:00 - 15:30", desc: "Almoço marinho no bairro boêmio de Barranco (Ceviche e Causa Rellena)." },
+                    { time: "15:30 - 18:00", desc: "Caminhada pela Ponte dos Suspiros e Malecón de Miraflores." },
+                    { time: "18:30 - 20:30", desc: "Espetáculo de luzes no Circuito Mágico da Água." }
+                ],
+                costsDetail: "Tour Ilhas Palomino (S/ 253 = R$ 384,56) + Taxa SERNANP Callao (S/ 11 = R$ 16,72) + Circuito Mágico da Água (S/ 5 = R$ 7,60)."
+            },
+            {
+                day: 10,
+                date: "01/06/2027 (Terça-feira)",
+                title: "Centro Histórico de Lima, Museu Larco e Regresso",
+                region: "coast",
+                hub: "Em trânsito",
+                altitude: "Nível do Mar",
+                category: "Cultura & Voo Retorno",
+                costPersonPEN: 85,
+                costPersonBRL: 129.2,
+                imgSources: {"files": [], "wiki": [["en", "Plaza de Armas of Lima"], ["es", "Plaza Mayor de Lima"], ["en", "Cathedral of Lima"]], "commons": "Plaza Mayor Lima Catedral"},
+                imgCaption: "Plaza Mayor e o conjunto arquitetônico colonial de Lima.",
+                quietHours: "Catacumbas de São Francisco na abertura (09:00) evita filas e calor subterrâneo.",
+                logistics: "Van/táxis executivos urbanos + Traslado com 4h de antecedência ao Aeroporto LIM.",
+                timeline: [
+                    { time: "09:15 - 12:00", desc: "Tour no Centro Histórico: Plaza Mayor e Catacumbas de São Francisco." },
+                    { time: "12:30 - 14:30", desc: "Almoço e visita ao Museu Larco (arte pré-colombiana e cerâmicas eróticas)." },
+                    { time: "15:00 - 17:30", desc: "Compras no Mercado Índio em Miraflores e busca de malas." },
+                    { time: "18:00", desc: "Traslado ao Aeroporto Internacional Jorge Chávez (LIM)." },
+                    { time: "22:45 / 23:50", desc: "Embarque no voo internacional de retorno a Londrina (chegada 02/06)." }
+                ],
+                costsDetail: "Ingresso Catacumbas (S/ 20 = R$ 30,40) + Museu Larco (S/ 35 = R$ 53,20) + Traslado Aeroporto (S/ 30 = R$ 45,60)."
+            }
+        ];
+
+        const budgetCategories = [
+            { item: "Passagem Aérea Internacional", desc: "Londrina (LDB) <-> Lima (LIM) com bagagem despachada e conexão (tarifa cobrada em reais no Brasil)", localVal: "≈ S/ 1.813 (pago em R$)", penVal: 1813, brlVal: 2756.00 },
+            { item: "Passagem Aérea Doméstica", desc: "Lima (LIM) <-> Cusco (CUZ) ida/volta com franquia de 23 kg", localVal: "S/ 320,00", penVal: 320, brlVal: 486.40 },
+            { item: "Ingressos & Taxas Locais", desc: "BTCI Cusco, Qorikancha, Maras, Phinaya, Mollepata, Catacumbas, Museu Larco e Taxas SERNANP", localVal: "S/ 292,00", penVal: 292, brlVal: 443.84 },
+            { item: "Ingresso Machu Picchu (Circ. 2)", desc: "Bilhete oficial Santuário Histórico + Preservação Ambiental", localVal: "S/ 163,00", penVal: 163, brlVal: 247.76 },
+            { item: "Ônibus Consettur Machu Picchu", desc: "Passagem oficial de subida e descida em Aguas Calientes", localVal: "S/ 81,00", penVal: 81, brlVal: 123.12 },
+            { item: "Trem Panorâmico PeruRail", desc: "Bilhetes Ida e Volta (Ollantaytambo <-> Aguas Calientes)", localVal: "S/ 539,00", penVal: 539, brlVal: 819.28 },
+            { item: "Tours, Expedições & Traslados", desc: "Circuito Cusco/Vale, Glaciar Quelccaya 4x4, Humantay, Paracas/Huacachina, Palomino e traslados", localVal: "S/ 1.364,00", penVal: 1364, brlVal: 2073.28 },
+            { item: "Hospedagem Estimada", desc: "9 Noites em Hotéis categoria 3★/4★ bem localizados (quarto compartilhado)", localVal: "S/ 1.180,00", penVal: 1180, brlVal: 1793.60 },
+            { item: "Alimentação & Gastos Pessoais", desc: "Almoços buffet, jantares regionais, água e lanches ao longo dos 10 dias", localVal: "S/ 843,00", penVal: 843, brlVal: 1281.36 }
+        ];
+
+
+
+        // ===== ÍCONES EMBUTIDOS (SVG) — funcionam sem fontes externas =====
+        const ICONS = {"route": "<circle cx=\"6\" cy=\"19\" r=\"3\"/><path d=\"M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15\"/><circle cx=\"18\" cy=\"5\" r=\"3\"/>", "chart-pie": "<path d=\"M21.21 15.89A10 10 0 1 1 8 2.83\"/><path d=\"M22 12A10 10 0 0 0 12 2v10z\"/>", "calculator": "<rect x=\"4\" y=\"2\" width=\"16\" height=\"20\" rx=\"2\"/><path d=\"M8 6h8M16 14v4M16 10h.01M12 10h.01M8 10h.01M12 14h.01M8 14h.01M12 18h.01M8 18h.01\"/>", "layer-group": "<path d=\"m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z\"/><path d=\"m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65\"/><path d=\"m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65\"/>", "heart-pulse": "<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\"/><path d=\"M3.22 12H9.5l.5-1 2 4.5 2-7 1.5 3.5h5.27\"/>", "bars": "<path d=\"M4 6h16M4 12h16M4 18h16\"/>", "calendar-days": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01\"/>", "magnifying-glass": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>", "mountain": "<path d=\"m8 3 4 8 5-5 5 15H2L8 3z\"/>", "mountain-sun": "<path d=\"m8 3 4 8 5-5 5 15H2L8 3z\"/><path d=\"M4.14 15.08c2.62-1.57 5.24-1.43 7.86.42 2.74 1.94 5.49 2 8.23.19\"/>", "wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "map-location-dot": "<path d=\"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/>", "location-dot": "<path d=\"M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/>", "circle-info": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4M12 8h.01\"/>", "hand-holding-dollar": "<rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>", "money-bill-wave": "<rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2\"/><path d=\"M6 12h.01M18 12h.01\"/>", "circle-check": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/>", "circle-xmark": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6M9 9l6 6\"/>", "shirt": "<path d=\"M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z\"/>", "xmark": "<path d=\"M18 6 6 18M6 6l12 12\"/>", "compass": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m16.24 7.76-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z\"/>", "chevron-right": "<path d=\"m9 18 6-6-6-6\"/>", "camera": "<path d=\"M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z\"/><circle cx=\"12\" cy=\"13\" r=\"3\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 6v6l4 2\"/>", "users-slash": "<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75M2 2l20 20\"/>", "van-shuttle": "<path d=\"M8 6v6M15 6v6M2 12h19.6M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3\"/><circle cx=\"7\" cy=\"18\" r=\"2\"/><path d=\"M9 18h5\"/><circle cx=\"16\" cy=\"18\" r=\"2\"/>", "receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8M12 17.5v-11\"/>", "landmark": "<path d=\"M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M12 2l8 5H4z\"/>", "water": "<path d=\"M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/>", "image": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><circle cx=\"9\" cy=\"9\" r=\"2\"/><path d=\"m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21\"/>", "id-card": "<rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><circle cx=\"8\" cy=\"11\" r=\"2\"/><path d=\"M5 16c.6-1.4 1.7-2 3-2s2.4.6 3 2M14 10h5M14 13h4\"/>", "folder-open": "<path d=\"m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2\"/>", "shield-heart": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/><path d=\"M12 9v6M9 12h6\"/>", "sim-card": "<rect x=\"5\" y=\"2\" width=\"14\" height=\"20\" rx=\"2\"/><path d=\"M12 18h.01M9 6h6\"/>", "syringe": "<path d=\"m18 2 4 4M17 7l3-3M19 9 8.7 19.3c-1 1-2.5 1-3.4 0l-.6-.6c-1-1-1-2.5 0-3.4L15 5M9 11l4 4M5 19l-3 3M14 4l6 6\"/>", "credit-card": "<rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M2 10h20M6 15h4\"/>", "plug": "<path d=\"M12 22v-5M9 8V2M15 8V2M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z\"/>", "ticket": "<path d=\"M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z\"/><path d=\"M13 5v2M13 17v2M13 11v2\"/>", "list-check": "<path d=\"M11 18H3M15 18l2 2 4-4M16 12H3M16 6H3\"/>", "triangle-exclamation": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4M12 17h.01\"/>"};
+        function hydrateIcons(root) {
+            (root || document).querySelectorAll('i[class*="fa-"]:not(.ico)').forEach(el => {
+                const name = [...el.classList].map(c => c.replace(/^fa-/, '')).find(n => ICONS[n]);
+                if (!name) return;
+                el.classList.add('ico');
+                el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+            });
+        }
+        new MutationObserver(muts => muts.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) hydrateIcons(n.parentNode || n); })))
+            .observe(document.documentElement, { childList: true, subtree: true });
+        document.addEventListener('DOMContentLoaded', () => hydrateIcons(document));
+
+        // ===== ILUSTRAÇÕES DE CADA PASSEIO (embutidas no arquivo, sempre visíveis) =====
+        const SCENES = {"1": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s1__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6fa8dc\"/><stop offset=\"1\" stop-color=\"#cfe2f3\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s1__U__)\"/>\n<path d=\"M0 230 L120 170 L260 215 L400 160 L560 210 L700 165 L800 200 L800 300 L0 300Z\" fill=\"#7d9a6a\"/>\n<rect x=\"300\" y=\"120\" width=\"70\" height=\"120\" fill=\"#f3ead8\"/><path d=\"M292 120 L335 80 L378 120Z\" fill=\"#a0442c\"/>\n<rect x=\"318\" y=\"140\" width=\"34\" height=\"40\" rx=\"17\" fill=\"#3d2f24\"/><rect x=\"330\" y=\"60\" width=\"10\" height=\"24\" fill=\"#f3ead8\"/><rect x=\"324\" y=\"66\" width=\"22\" height=\"5\" fill=\"#f3ead8\"/>\n<rect x=\"370\" y=\"175\" width=\"330\" height=\"70\" fill=\"#f3ead8\"/><path d=\"M362 175 L535 140 L708 175Z\" fill=\"#a0442c\"/>\n<rect x=\"390\" y=\"192\" width=\"22\" height=\"36\" rx=\"11\" fill=\"#3d2f24\"/><rect x=\"445\" y=\"192\" width=\"22\" height=\"36\" rx=\"11\" fill=\"#3d2f24\"/><rect x=\"500\" y=\"192\" width=\"22\" height=\"36\" rx=\"11\" fill=\"#3d2f24\"/><rect x=\"555\" y=\"192\" width=\"22\" height=\"36\" rx=\"11\" fill=\"#3d2f24\"/><rect x=\"610\" y=\"192\" width=\"22\" height=\"36\" rx=\"11\" fill=\"#3d2f24\"/><rect x=\"665\" y=\"192\" width=\"22\" height=\"36\" rx=\"11\" fill=\"#3d2f24\"/>\n<path d=\"M60 245 Q400 225 760 245 L760 430 L60 430Z\" fill=\"#8f8a80\"/>\n<clipPath id=\"cw1__U__\"><path d=\"M60 245 Q400 225 760 245 L760 430 L60 430Z\"/></clipPath>\n<g clip-path=\"url(#cw1__U__)\"><polygon points=\"60,228 60,228 60,261 60,260\" fill=\"#888276\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"60,229 118,230 118,260 63,260\" fill=\"#898377\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"120,229 174,228 174,261 119,261\" fill=\"#999387\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"178,230 235,230 234,261 179,260\" fill=\"#938d81\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"236,230 291,229 291,261 236,261\" fill=\"#958f83\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"294,229 350,229 350,260 294,260\" fill=\"#908a7e\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"354,228 409,228 408,259 353,259\" fill=\"#9a9488\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"411,229 467,230 468,261 411,260\" fill=\"#8a8478\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"469,230 525,231 524,261 469,260\" fill=\"#878175\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"529,229 583,229 584,261 529,260\" fill=\"#a59f93\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"585,229 642,231 641,259 586,260\" fill=\"#9c968a\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"645,229 701,228 701,260 643,259\" fill=\"#918b7f\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"702,228 759,229 758,259 704,260\" fill=\"#898377\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"760,231 760,230 760,260 760,260\" fill=\"#9f998d\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"60,262 89,262 88,295 60,295\" fill=\"#8c867a\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"92,264 147,262 146,293 92,294\" fill=\"#a49e92\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"148,264 203,263 204,295 148,294\" fill=\"#969084\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"207,264 263,262 261,294 208,293\" fill=\"#a7a195\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"265,264 322,264 321,293 265,295\" fill=\"#a8a296\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"325,263 380,264 378,293 325,293\" fill=\"#948e82\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"381,263 437,265 437,294 381,294\" fill=\"#9c968a\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"441,264 495,265 496,295 440,295\" fill=\"#938d81\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"499,265 554,262 553,294 499,293\" fill=\"#8d877b\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"559,264 612,263 614,293 557,293\" fill=\"#9f998d\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"616,264 672,262 670,295 616,294\" fill=\"#8f897d\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"674,263 729,264 730,294 673,293\" fill=\"#8c867a\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"732,264 760,264 760,295 732,294\" fill=\"#958f83\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"60,296 60,298 60,327 60,327\" fill=\"#a7a195\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"61,298 117,297 117,329 61,328\" fill=\"#868074\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"121,296 176,297 176,329 120,327\" fill=\"#a49e92\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"179,296 233,296 234,327 178,327\" fill=\"#8a8478\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"236,297 292,297 291,328 237,328\" fill=\"#958f83\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"295,298 349,296 350,326 296,329\" fill=\"#8d877b\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"353,296 408,297 409,328 352,327\" fill=\"#9d978b\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"410,298 465,296 465,328 411,326\" fill=\"#948e82\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"469,297 525,296 526,328 470,329\" fill=\"#a9a397\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"528,297 584,297 584,326 527,326\" fill=\"#948e82\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"588,296 643,295 641,328 585,328\" fill=\"#969084\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"645,297 700,297 701,328 646,328\" fill=\"#8a8478\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"702,295 760,296 758,328 702,329\" fill=\"#868074\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"760,297 760,296 760,327 760,329\" fill=\"#908a7e\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"60,330 86,331 88,362 60,361\" fill=\"#979185\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"90,329 147,329 145,361 90,361\" fill=\"#a29c90\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"148,331 205,330 203,361 149,361\" fill=\"#948e82\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"207,331 262,331 263,362 206,362\" fill=\"#8a8478\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"266,332 321,329 321,362 266,360\" fill=\"#958f83\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"325,329 380,330 381,362 323,360\" fill=\"#9a9488\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"382,332 438,330 439,362 382,361\" fill=\"#928c80\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"440,331 497,331 497,361 440,362\" fill=\"#948e82\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"498,332 553,329 553,360 499,360\" fill=\"#a59f93\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"556,331 612,329 612,360 558,360\" fill=\"#a6a094\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"615,331 671,332 670,360 616,360\" fill=\"#948e82\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"673,329 729,332 730,361 673,363\" fill=\"#a8a296\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"733,330 760,331 760,361 732,361\" fill=\"#8a8478\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"60,364 60,365 60,394 60,394\" fill=\"#a39d91\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"61,364 117,365 116,394 62,396\" fill=\"#8f897d\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"119,365 175,365 176,395 120,393\" fill=\"#8c867a\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"179,365 234,364 234,395 177,394\" fill=\"#928c80\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"236,363 292,364 293,395 238,393\" fill=\"#9e988c\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"294,366 351,364 351,395 296,396\" fill=\"#a6a094\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"353,363 409,364 407,395 352,393\" fill=\"#a29c90\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"411,365 467,364 468,395 411,395\" fill=\"#9f998d\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"469,365 525,365 526,395 470,393\" fill=\"#8a8478\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"528,364 584,363 585,394 528,394\" fill=\"#958f83\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"588,364 642,365 641,395 585,394\" fill=\"#9f998d\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"646,365 700,365 702,394 645,394\" fill=\"#989286\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"703,365 758,363 759,395 702,394\" fill=\"#969084\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"760,363 760,365 760,394 760,395\" fill=\"#a59f93\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"60,398 88,399 88,428 60,429\" fill=\"#a9a397\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"89,397 147,398 145,428 90,429\" fill=\"#a7a195\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"148,397 204,398 204,429 150,428\" fill=\"#938d81\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"206,399 263,398 263,429 208,427\" fill=\"#8e887c\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"264,398 320,398 321,430 265,427\" fill=\"#a7a195\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"325,399 380,397 380,428 325,427\" fill=\"#a39d91\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"381,399 439,397 437,430 383,427\" fill=\"#969084\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"441,398 495,397 497,427 440,429\" fill=\"#868074\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"498,397 554,399 554,427 499,429\" fill=\"#958f83\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"556,398 612,396 614,427 558,430\" fill=\"#948e82\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"616,399 672,396 671,429 616,429\" fill=\"#989286\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"675,398 730,399 730,428 673,429\" fill=\"#989286\" stroke=\"#4d4841\" stroke-width=\"1.5\"/><polygon points=\"731,398 760,399 760,427 731,428\" fill=\"#9f998d\" stroke=\"#4d4841\" stroke-width=\"1.5\"/></g>\n<path d=\"M370 300 L430 300 L440 400 L360 400Z\" fill=\"#2c2620\"/>\n<rect x=\"0\" y=\"430\" width=\"800\" height=\"70\" fill=\"#6f8f4e\"/></svg>", "2": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s2__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#5b9bd5\"/><stop offset=\"1\" stop-color=\"#d9eaf7\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s2__U__)\"/><path d=\"M0 170 L150 120 L330 160 L520 110 L800 150 L800 260 L0 260Z\" fill=\"#8aa37a\"/><rect x=\"55\" y=\"188\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"24\" y=\"213\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"145\" y=\"201\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"53\" y=\"178\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"188\" y=\"200\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"460\" y=\"195\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"750\" y=\"182\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"81\" y=\"185\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"337\" y=\"187\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"189\" y=\"208\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"764\" y=\"204\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"32\" y=\"194\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"680\" y=\"199\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"382\" y=\"196\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"453\" y=\"185\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"111\" y=\"175\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"80\" y=\"192\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"82\" y=\"197\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"430\" y=\"182\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"574\" y=\"188\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"389\" y=\"197\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"316\" y=\"202\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"89\" y=\"178\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"722\" y=\"205\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"200\" y=\"198\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"554\" y=\"203\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"197\" y=\"195\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"372\" y=\"205\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"31\" y=\"215\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"420\" y=\"190\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"640\" y=\"200\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"41\" y=\"199\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"35\" y=\"204\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"64\" y=\"178\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"263\" y=\"187\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"765\" y=\"179\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"620\" y=\"196\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"371\" y=\"192\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"343\" y=\"214\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"44\" y=\"191\" width=\"10\" height=\"7\" fill=\"#b5553a\"/><rect x=\"0\" y=\"205\" width=\"800\" height=\"105\" fill=\"#7fa35a\"/><clipPath id=\"z0__U__\"><polygon points=\"0,265 100,220 200,265 300,220 400,265 500,220 600,265 700,220 800,265 800,310 0,310\"/></clipPath><g clip-path=\"url(#z0__U__)\"><rect x=\"0\" y=\"225\" width=\"800\" height=\"85\" fill=\"#8c877d\"/><polygon points=\"0,228 0,226 0,250 0,249\" fill=\"#928c80\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,226 87,230 84,251 1,251\" fill=\"#ada79b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"90,227 178,230 176,250 90,252\" fill=\"#a29c90\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"180,229 264,228 265,253 180,250\" fill=\"#aca69a\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"269,227 351,229 351,252 267,253\" fill=\"#ada79b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"360,230 444,226 442,249 357,251\" fill=\"#958f83\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"448,226 532,226 532,252 447,252\" fill=\"#9d978b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"534,229 619,227 620,248 536,252\" fill=\"#948e82\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"625,230 711,227 707,249 627,253\" fill=\"#a09a8e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"712,225 797,229 799,253 714,252\" fill=\"#9e988c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"800,228 800,228 800,252 800,252\" fill=\"#908a7e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,255 41,257 43,282 0,278\" fill=\"#999387\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"48,254 133,256 131,280 48,278\" fill=\"#979185\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"137,254 221,257 220,280 135,277\" fill=\"#a19b8f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"226,258 309,253 307,278 225,280\" fill=\"#a7a195\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"312,253 395,255 396,280 316,279\" fill=\"#989286\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"401,254 488,257 487,279 405,278\" fill=\"#989286\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"490,255 575,258 577,279 493,277\" fill=\"#9a9488\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"579,258 666,258 665,279 581,281\" fill=\"#989286\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"670,258 752,256 755,279 669,281\" fill=\"#afa99d\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"756,255 800,258 800,281 760,277\" fill=\"#908a7e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,283 0,284 0,306 0,308\" fill=\"#9d978b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"2,285 87,284 89,307 2,309\" fill=\"#aba599\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"93,286 176,282 176,308 93,307\" fill=\"#908a7e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"178,282 262,283 263,310 182,306\" fill=\"#969084\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"267,282 352,285 355,309 271,309\" fill=\"#989286\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"359,285 443,286 441,309 357,307\" fill=\"#aba599\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"445,284 529,283 532,307 446,310\" fill=\"#999387\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"535,285 621,283 620,306 535,306\" fill=\"#918b7f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"625,283 707,284 708,306 623,305\" fill=\"#a7a195\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"715,284 798,284 799,308 712,309\" fill=\"#918b7f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"800,284 800,286 800,305 800,306\" fill=\"#908a7e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/></g><rect x=\"0\" y=\"285\" width=\"800\" height=\"115\" fill=\"#7fa35a\"/><clipPath id=\"z1__U__\"><polygon points=\"0,345 100,300 200,345 300,300 400,345 500,300 600,345 700,300 800,345 800,400 0,400\"/></clipPath><g clip-path=\"url(#z1__U__)\"><rect x=\"0\" y=\"305\" width=\"800\" height=\"95\" fill=\"#8c877d\"/><polygon points=\"0,306 0,307 0,336 0,334\" fill=\"#908a7e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,305 87,306 87,336 3,334\" fill=\"#9b9589\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"91,309 177,305 174,333 91,336\" fill=\"#979185\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"182,309 265,306 267,333 181,335\" fill=\"#aaa498\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"270,308 353,306 356,336 267,336\" fill=\"#989286\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"356,309 444,308 440,336 357,334\" fill=\"#aea89c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"448,307 530,308 533,334 449,333\" fill=\"#aca69a\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"537,305 618,309 620,333 536,336\" fill=\"#948e82\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"624,308 710,309 706,332 624,336\" fill=\"#b1ab9f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"715,308 795,310 799,332 716,336\" fill=\"#aea89c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"800,306 800,309 800,333 800,332\" fill=\"#a39d91\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,339 40,341 40,364 0,366\" fill=\"#afa99d\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"48,341 131,340 130,367 46,365\" fill=\"#928c80\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"136,338 222,337 219,368 138,365\" fill=\"#8f897d\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"222,340 308,340 307,368 225,367\" fill=\"#b0aa9e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"316,337 396,341 395,368 312,368\" fill=\"#908a7e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"405,341 485,337 485,365 402,368\" fill=\"#9b9589\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"490,338 576,338 573,368 493,364\" fill=\"#aea89c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"580,338 663,341 667,366 578,366\" fill=\"#918b7f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"669,338 751,337 751,367 667,367\" fill=\"#918b7f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"756,339 800,341 800,366 757,364\" fill=\"#9e988c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,369 0,373 0,399 0,396\" fill=\"#ada79b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"4,372 85,371 87,398 2,396\" fill=\"#938d81\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"91,372 176,370 176,397 90,395\" fill=\"#9c968a\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"182,369 264,372 264,400 181,397\" fill=\"#aaa498\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"270,372 355,371 352,397 267,398\" fill=\"#9d978b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"358,370 441,372 441,396 360,396\" fill=\"#afa99d\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"446,370 529,370 529,395 445,397\" fill=\"#9a9488\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"535,373 618,372 620,399 537,399\" fill=\"#9b9589\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"627,371 711,373 709,399 627,399\" fill=\"#8f897d\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"712,371 798,372 795,398 714,396\" fill=\"#a8a296\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"800,372 800,373 800,397 800,399\" fill=\"#958f83\" stroke=\"#4a453e\" stroke-width=\"1.5\"/></g><rect x=\"0\" y=\"375\" width=\"800\" height=\"125\" fill=\"#7fa35a\"/><clipPath id=\"z2__U__\"><polygon points=\"0,435 100,390 200,435 300,390 400,435 500,390 600,435 700,390 800,435 800,500 0,500\"/></clipPath><g clip-path=\"url(#z2__U__)\"><rect x=\"0\" y=\"395\" width=\"800\" height=\"105\" fill=\"#8c877d\"/><polygon points=\"0,397 0,395 0,417 0,418\" fill=\"#9e988c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"4,397 89,399 86,418 4,417\" fill=\"#a29c90\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"93,397 175,400 178,419 90,417\" fill=\"#9a9488\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"180,396 264,398 263,419 181,417\" fill=\"#afa99d\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"268,399 353,400 355,419 271,418\" fill=\"#a49e92\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"359,396 443,395 444,417 359,418\" fill=\"#9e988c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"445,397 531,400 528,416 449,419\" fill=\"#989286\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"534,399 618,398 620,418 534,416\" fill=\"#a49e92\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"626,399 707,397 706,417 625,417\" fill=\"#aca69a\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"713,399 799,397 799,419 712,421\" fill=\"#9f998d\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"800,398 800,397 800,421 800,420\" fill=\"#a19b8f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,422 40,426 41,447 0,444\" fill=\"#8e887c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"48,422 133,423 130,445 49,447\" fill=\"#aaa498\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"135,422 218,425 221,443 136,444\" fill=\"#b1ab9f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"226,425 310,425 308,444 224,443\" fill=\"#b1ab9f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"312,423 396,424 397,445 316,444\" fill=\"#9d978b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"402,424 485,421 485,445 403,444\" fill=\"#aba599\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"491,423 573,422 575,444 489,444\" fill=\"#a39d91\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"582,422 664,425 666,446 580,447\" fill=\"#948e82\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"671,423 753,424 752,446 669,445\" fill=\"#b1ab9f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"756,423 800,424 800,443 760,446\" fill=\"#9b9589\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,451 0,449 0,471 0,470\" fill=\"#908a7e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"2,450 87,450 87,473 0,470\" fill=\"#aca69a\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"92,451 174,452 175,471 92,470\" fill=\"#938d81\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"179,451 264,451 266,473 178,470\" fill=\"#8e887c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"269,452 352,450 354,472 269,472\" fill=\"#a9a397\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"358,450 440,450 442,470 359,472\" fill=\"#a7a195\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"447,448 531,450 529,469 447,472\" fill=\"#948e82\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"534,450 618,451 620,474 537,469\" fill=\"#938d81\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"623,448 709,449 708,471 626,469\" fill=\"#a59f93\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"715,451 796,451 800,471 715,471\" fill=\"#9e988c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"800,448 800,448 800,470 800,472\" fill=\"#a19b8f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"0,475 40,476 44,498 0,498\" fill=\"#989286\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"45,478 132,477 130,498 46,496\" fill=\"#9f998d\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"137,477 221,474 217,496 137,498\" fill=\"#8e887c\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"226,477 310,476 307,498 226,497\" fill=\"#9c968a\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"315,475 400,475 398,497 315,496\" fill=\"#908a7e\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"401,474 484,479 488,495 404,497\" fill=\"#ada79b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"491,474 575,478 577,496 494,499\" fill=\"#918b7f\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"581,476 666,475 663,496 580,500\" fill=\"#a49e92\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"671,475 753,478 751,497 669,497\" fill=\"#9a9488\" stroke=\"#4a453e\" stroke-width=\"1.5\"/><polygon points=\"757,474 800,475 800,498 759,496\" fill=\"#9d978b\" stroke=\"#4a453e\" stroke-width=\"1.5\"/></g><rect x=\"0\" y=\"490\" width=\"800\" height=\"10\" fill=\"#6f8f4e\"/></svg>", "3": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s3__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#7fb3e0\"/><stop offset=\"1\" stop-color=\"#e8f1f8\"/></linearGradient><linearGradient id=\"h3__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#a8744f\"/><stop offset=\"1\" stop-color=\"#7a4f33\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s3__U__)\"/><path d=\"M0 150 L200 60 L380 130 L560 50 L800 140 L800 300 L0 300Z\" fill=\"#8c6a52\"/><path d=\"M0 190 L260 140 L520 180 L800 150 L800 500 L0 500Z\" fill=\"url(#h3__U__)\"/><rect x=\"-13\" y=\"199\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"48\" y=\"197\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"108\" y=\"200\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"163\" y=\"202\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"224\" y=\"199\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"282\" y=\"200\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"343\" y=\"199\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"399\" y=\"199\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"456\" y=\"202\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"517\" y=\"202\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"576\" y=\"198\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"633\" y=\"201\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"693\" y=\"202\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"754\" y=\"198\" width=\"55\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-7\" y=\"224\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"47\" y=\"224\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"99\" y=\"229\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"151\" y=\"229\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"210\" y=\"228\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"264\" y=\"226\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"316\" y=\"225\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"375\" y=\"229\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"429\" y=\"224\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"480\" y=\"229\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"535\" y=\"225\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"593\" y=\"227\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"645\" y=\"225\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"699\" y=\"224\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"755\" y=\"227\" width=\"51\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-11\" y=\"252\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"42\" y=\"256\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"92\" y=\"256\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"142\" y=\"255\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"196\" y=\"254\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"244\" y=\"257\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"300\" y=\"257\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"348\" y=\"252\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"401\" y=\"257\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"451\" y=\"254\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"500\" y=\"254\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"604\" y=\"252\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"654\" y=\"255\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"708\" y=\"256\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"759\" y=\"252\" width=\"47\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-9\" y=\"279\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"88\" y=\"282\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"135\" y=\"280\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"185\" y=\"278\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"231\" y=\"280\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"280\" y=\"278\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"327\" y=\"278\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"378\" y=\"278\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"425\" y=\"283\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"474\" y=\"281\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"519\" y=\"282\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"569\" y=\"281\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"616\" y=\"282\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"663\" y=\"283\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"711\" y=\"282\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"759\" y=\"281\" width=\"44\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-12\" y=\"307\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"79\" y=\"308\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"124\" y=\"310\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"173\" y=\"306\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"218\" y=\"311\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"266\" y=\"308\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"399\" y=\"310\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"445\" y=\"310\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"493\" y=\"305\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"535\" y=\"307\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"582\" y=\"307\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"626\" y=\"306\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"670\" y=\"311\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"722\" y=\"305\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"762\" y=\"307\" width=\"42\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-9\" y=\"337\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"34\" y=\"335\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"117\" y=\"333\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"163\" y=\"335\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"203\" y=\"338\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"247\" y=\"334\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"293\" y=\"336\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"336\" y=\"336\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"377\" y=\"335\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"421\" y=\"336\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"507\" y=\"335\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"550\" y=\"333\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"593\" y=\"334\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"636\" y=\"333\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"681\" y=\"336\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"723\" y=\"336\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"767\" y=\"336\" width=\"39\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-10\" y=\"360\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"32\" y=\"364\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"70\" y=\"365\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"112\" y=\"363\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"152\" y=\"359\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"195\" y=\"361\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"234\" y=\"361\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"278\" y=\"362\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"317\" y=\"361\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"359\" y=\"361\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"401\" y=\"361\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"439\" y=\"360\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"481\" y=\"364\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"522\" y=\"364\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"562\" y=\"364\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"602\" y=\"364\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"649\" y=\"362\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"687\" y=\"363\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"770\" y=\"359\" width=\"37\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-10\" y=\"388\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"30\" y=\"387\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"71\" y=\"389\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"110\" y=\"390\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"148\" y=\"388\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"187\" y=\"387\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"225\" y=\"392\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"264\" y=\"391\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"302\" y=\"387\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"342\" y=\"389\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"419\" y=\"388\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"459\" y=\"388\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"498\" y=\"387\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"538\" y=\"391\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"576\" y=\"387\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"612\" y=\"391\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"696\" y=\"389\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"768\" y=\"388\" width=\"35\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-12\" y=\"413\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"25\" y=\"416\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"63\" y=\"413\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"104\" y=\"419\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"136\" y=\"414\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"179\" y=\"415\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"216\" y=\"417\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"289\" y=\"417\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"324\" y=\"416\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"365\" y=\"414\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"398\" y=\"415\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"436\" y=\"418\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"510\" y=\"415\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"548\" y=\"415\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"584\" y=\"415\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"622\" y=\"414\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"663\" y=\"416\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"700\" y=\"415\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"737\" y=\"419\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"772\" y=\"414\" width=\"33\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"-10\" y=\"444\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"26\" y=\"446\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"60\" y=\"441\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"98\" y=\"441\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"131\" y=\"442\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"170\" y=\"440\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"201\" y=\"445\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"238\" y=\"440\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"277\" y=\"441\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"310\" y=\"441\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"346\" y=\"445\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"384\" y=\"445\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"420\" y=\"442\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"454\" y=\"442\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"490\" y=\"446\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"524\" y=\"441\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"559\" y=\"441\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"630\" y=\"442\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"669\" y=\"444\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"703\" y=\"443\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"737\" y=\"444\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"777\" y=\"445\" width=\"32\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"26\" y=\"467\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"91\" y=\"469\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"126\" y=\"473\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"163\" y=\"468\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"195\" y=\"470\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"231\" y=\"470\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"264\" y=\"471\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#c9b39a\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"300\" y=\"472\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"334\" y=\"470\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"366\" y=\"471\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#d9c2a7\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"399\" y=\"468\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"434\" y=\"469\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"469\" y=\"470\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"501\" y=\"470\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"536\" y=\"472\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#ece2d0\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"571\" y=\"471\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#f4f1ea\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"605\" y=\"468\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#e9d9cc\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"637\" y=\"472\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"675\" y=\"469\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"744\" y=\"468\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#e6d3bf\" stroke=\"#8a6448\" stroke-width=\"2\"/><rect x=\"776\" y=\"469\" width=\"30\" height=\"22\" rx=\"2\" fill=\"#f0e6d8\" stroke=\"#8a6448\" stroke-width=\"2\"/></svg>", "4": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s4__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#6aa6d8\"/><stop offset=\"1\" stop-color=\"#dcebf6\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s4__U__)\"/><path d=\"M0 200 L90 90 L200 170 L330 40 L470 150 L560 70 L700 130 L800 90 L800 400 L0 400Z\" fill=\"#6f7f5c\"/><path d=\"M180 400 L330 110 L520 400Z\" fill=\"#7b8a63\"/><rect x=\"200\" y=\"380\" width=\"300\" height=\"14\" fill=\"#8db35a\"/><rect x=\"200\" y=\"394\" width=\"300\" height=\"8\" fill=\"#8a8173\"/><rect x=\"211\" y=\"358\" width=\"278\" height=\"14\" fill=\"#7fa04e\"/><rect x=\"211\" y=\"372\" width=\"278\" height=\"8\" fill=\"#8a8173\"/><rect x=\"222\" y=\"336\" width=\"256\" height=\"14\" fill=\"#8db35a\"/><rect x=\"222\" y=\"350\" width=\"256\" height=\"8\" fill=\"#8a8173\"/><rect x=\"233\" y=\"314\" width=\"234\" height=\"14\" fill=\"#7fa04e\"/><rect x=\"233\" y=\"328\" width=\"234\" height=\"8\" fill=\"#8a8173\"/><rect x=\"244\" y=\"292\" width=\"212\" height=\"14\" fill=\"#8db35a\"/><rect x=\"244\" y=\"306\" width=\"212\" height=\"8\" fill=\"#8a8173\"/><rect x=\"255\" y=\"270\" width=\"190\" height=\"14\" fill=\"#7fa04e\"/><rect x=\"255\" y=\"284\" width=\"190\" height=\"8\" fill=\"#8a8173\"/><rect x=\"266\" y=\"248\" width=\"168\" height=\"14\" fill=\"#8db35a\"/><rect x=\"266\" y=\"262\" width=\"168\" height=\"8\" fill=\"#8a8173\"/><rect x=\"277\" y=\"226\" width=\"146\" height=\"14\" fill=\"#7fa04e\"/><rect x=\"277\" y=\"240\" width=\"146\" height=\"8\" fill=\"#8a8173\"/><rect x=\"288\" y=\"204\" width=\"124\" height=\"14\" fill=\"#8db35a\"/><rect x=\"288\" y=\"218\" width=\"124\" height=\"8\" fill=\"#8a8173\"/><rect x=\"299\" y=\"182\" width=\"102\" height=\"14\" fill=\"#7fa04e\"/><rect x=\"299\" y=\"196\" width=\"102\" height=\"8\" fill=\"#8a8173\"/><rect x=\"310\" y=\"160\" width=\"80\" height=\"14\" fill=\"#8db35a\"/><rect x=\"310\" y=\"174\" width=\"80\" height=\"8\" fill=\"#8a8173\"/><rect x=\"321\" y=\"138\" width=\"58\" height=\"14\" fill=\"#7fa04e\"/><rect x=\"321\" y=\"152\" width=\"58\" height=\"8\" fill=\"#8a8173\"/><rect x=\"320\" y=\"118\" width=\"60\" height=\"18\" fill=\"#9b9285\"/><rect x=\"332\" y=\"104\" width=\"12\" height=\"14\" fill=\"#9b9285\"/><rect x=\"356\" y=\"104\" width=\"12\" height=\"14\" fill=\"#9b9285\"/><rect x=\"0\" y=\"400\" width=\"800\" height=\"100\" fill=\"#5d7a45\"/><path d=\"M0 450 Q200 430 400 452 T800 445 L800 470 Q600 480 400 470 T0 472Z\" fill=\"#5f8fb0\"/><rect x=\"0\" y=\"425\" width=\"800\" height=\"4\" fill=\"#4a3b2e\"/><rect x=\"520\" y=\"400\" width=\"68\" height=\"26\" rx=\"4\" fill=\"#123f6b\"/><rect x=\"526\" y=\"405\" width=\"56\" height=\"8\" fill=\"#a9c9e6\"/><rect x=\"592\" y=\"400\" width=\"68\" height=\"26\" rx=\"4\" fill=\"#123f6b\"/><rect x=\"598\" y=\"405\" width=\"56\" height=\"8\" fill=\"#a9c9e6\"/><rect x=\"664\" y=\"400\" width=\"68\" height=\"26\" rx=\"4\" fill=\"#123f6b\"/><rect x=\"670\" y=\"405\" width=\"56\" height=\"8\" fill=\"#a9c9e6\"/></svg>", "5": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s5__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#8db7dc\"/><stop offset=\"1\" stop-color=\"#eef4f8\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s5__U__)\"/><path d=\"M0 230 L120 150 L230 200 L340 120 L460 190 L800 140 L800 330 L0 330Z\" fill=\"#9fb2a4\"/><path d=\"M430 330 C470 200 500 90 560 60 C610 70 640 180 700 330Z\" fill=\"#3f6b3a\"/><path d=\"M560 60 C590 90 600 150 620 200 C580 170 560 120 545 80Z\" fill=\"#335a30\"/><path d=\"M650 330 C680 260 720 240 760 250 L800 330Z\" fill=\"#4c7a45\"/><ellipse cx=\"300\" cy=\"215\" rx=\"140\" ry=\"18\" fill=\"#fff\" opacity=\".7\"/><ellipse cx=\"650\" cy=\"250\" rx=\"120\" ry=\"14\" fill=\"#fff\" opacity=\".6\"/><path d=\"M0 330 L800 300 L800 500 L0 500Z\" fill=\"#5f8f4a\"/><rect x=\"40\" y=\"330\" width=\"37\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"248\" y=\"330\" width=\"43\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"352\" y=\"330\" width=\"36\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"456\" y=\"330\" width=\"41\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"508\" y=\"330\" width=\"38\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"612\" y=\"330\" width=\"37\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"664\" y=\"330\" width=\"36\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"716\" y=\"330\" width=\"30\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"170\" y=\"354\" width=\"32\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"326\" y=\"354\" width=\"33\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"430\" y=\"354\" width=\"37\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"482\" y=\"354\" width=\"38\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"534\" y=\"354\" width=\"39\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"638\" y=\"354\" width=\"39\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"690\" y=\"354\" width=\"36\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"92\" y=\"378\" width=\"40\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"144\" y=\"378\" width=\"34\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"196\" y=\"378\" width=\"43\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"248\" y=\"378\" width=\"37\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"300\" y=\"378\" width=\"30\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"508\" y=\"378\" width=\"40\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"664\" y=\"378\" width=\"34\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"66\" y=\"402\" width=\"29\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"118\" y=\"402\" width=\"44\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"170\" y=\"402\" width=\"37\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"326\" y=\"402\" width=\"38\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"482\" y=\"402\" width=\"33\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"534\" y=\"402\" width=\"33\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"586\" y=\"402\" width=\"28\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"638\" y=\"402\" width=\"39\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"690\" y=\"402\" width=\"43\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"92\" y=\"426\" width=\"32\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"144\" y=\"426\" width=\"30\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"196\" y=\"426\" width=\"29\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"248\" y=\"426\" width=\"38\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"300\" y=\"426\" width=\"37\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"352\" y=\"426\" width=\"41\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"404\" y=\"426\" width=\"43\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"456\" y=\"426\" width=\"32\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"612\" y=\"426\" width=\"28\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"664\" y=\"426\" width=\"35\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"716\" y=\"426\" width=\"42\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"66\" y=\"450\" width=\"32\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"118\" y=\"450\" width=\"39\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"170\" y=\"450\" width=\"41\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"222\" y=\"450\" width=\"35\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"274\" y=\"450\" width=\"40\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"430\" y=\"450\" width=\"34\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"482\" y=\"450\" width=\"31\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"586\" y=\"450\" width=\"31\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"690\" y=\"450\" width=\"43\" height=\"18\" fill=\"#a39c90\" stroke=\"#6b645a\"/><rect x=\"0\" y=\"410\" width=\"260\" height=\"10\" fill=\"#76a85a\"/><rect x=\"0\" y=\"420\" width=\"260\" height=\"6\" fill=\"#8a8173\"/><rect x=\"0\" y=\"428\" width=\"230\" height=\"10\" fill=\"#76a85a\"/><rect x=\"0\" y=\"438\" width=\"230\" height=\"6\" fill=\"#8a8173\"/><rect x=\"0\" y=\"446\" width=\"200\" height=\"10\" fill=\"#76a85a\"/><rect x=\"0\" y=\"456\" width=\"200\" height=\"6\" fill=\"#8a8173\"/><rect x=\"0\" y=\"464\" width=\"170\" height=\"10\" fill=\"#76a85a\"/><rect x=\"0\" y=\"474\" width=\"170\" height=\"6\" fill=\"#8a8173\"/><rect x=\"0\" y=\"482\" width=\"140\" height=\"10\" fill=\"#76a85a\"/><rect x=\"0\" y=\"492\" width=\"140\" height=\"6\" fill=\"#8a8173\"/></svg>", "6": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s6__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#2f6fb5\"/><stop offset=\"1\" stop-color=\"#bcd8f1\"/></linearGradient><linearGradient id=\"ice6__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\"1\" stop-color=\"#cfe6f5\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s6__U__)\"/><path d=\"M0 240 L90 190 L230 170 L420 150 L600 160 L800 190 L800 300 L0 300Z\" fill=\"url(#ice6__U__)\"/><path d=\"M0 240 L800 200 L800 330 L0 340Z\" fill=\"#dfeefa\"/><rect x=\"-0\" y=\"240\" width=\"10\" height=\"77\" fill=\"#b9dcf2\"/><rect x=\"16\" y=\"239\" width=\"11\" height=\"74\" fill=\"#c7e3f5\"/><rect x=\"26\" y=\"239\" width=\"10\" height=\"105\" fill=\"#b9dcf2\"/><rect x=\"43\" y=\"238\" width=\"11\" height=\"102\" fill=\"#b9dcf2\"/><rect x=\"56\" y=\"237\" width=\"11\" height=\"95\" fill=\"#9cc9ea\"/><rect x=\"73\" y=\"236\" width=\"7\" height=\"100\" fill=\"#b9dcf2\"/><rect x=\"82\" y=\"236\" width=\"12\" height=\"73\" fill=\"#c7e3f5\"/><rect x=\"96\" y=\"235\" width=\"8\" height=\"72\" fill=\"#b9dcf2\"/><rect x=\"113\" y=\"234\" width=\"7\" height=\"99\" fill=\"#e8f4fc\"/><rect x=\"124\" y=\"234\" width=\"7\" height=\"97\" fill=\"#b9dcf2\"/><rect x=\"141\" y=\"233\" width=\"12\" height=\"82\" fill=\"#b9dcf2\"/><rect x=\"157\" y=\"232\" width=\"12\" height=\"92\" fill=\"#9cc9ea\"/><rect x=\"167\" y=\"232\" width=\"12\" height=\"91\" fill=\"#b9dcf2\"/><rect x=\"184\" y=\"231\" width=\"6\" height=\"85\" fill=\"#e8f4fc\"/><rect x=\"196\" y=\"230\" width=\"10\" height=\"92\" fill=\"#c7e3f5\"/><rect x=\"207\" y=\"230\" width=\"10\" height=\"92\" fill=\"#b9dcf2\"/><rect x=\"223\" y=\"229\" width=\"8\" height=\"77\" fill=\"#b9dcf2\"/><rect x=\"241\" y=\"228\" width=\"11\" height=\"85\" fill=\"#e8f4fc\"/><rect x=\"251\" y=\"227\" width=\"11\" height=\"98\" fill=\"#b9dcf2\"/><rect x=\"268\" y=\"227\" width=\"10\" height=\"98\" fill=\"#b9dcf2\"/><rect x=\"282\" y=\"226\" width=\"9\" height=\"77\" fill=\"#b9dcf2\"/><rect x=\"296\" y=\"225\" width=\"7\" height=\"79\" fill=\"#e8f4fc\"/><rect x=\"310\" y=\"224\" width=\"11\" height=\"94\" fill=\"#9cc9ea\"/><rect x=\"323\" y=\"224\" width=\"8\" height=\"104\" fill=\"#e8f4fc\"/><rect x=\"339\" y=\"223\" width=\"6\" height=\"71\" fill=\"#e8f4fc\"/><rect x=\"353\" y=\"222\" width=\"9\" height=\"102\" fill=\"#c7e3f5\"/><rect x=\"366\" y=\"222\" width=\"12\" height=\"72\" fill=\"#b9dcf2\"/><rect x=\"376\" y=\"221\" width=\"12\" height=\"95\" fill=\"#c7e3f5\"/><rect x=\"395\" y=\"220\" width=\"11\" height=\"98\" fill=\"#c7e3f5\"/><rect x=\"404\" y=\"220\" width=\"10\" height=\"103\" fill=\"#b9dcf2\"/><rect x=\"419\" y=\"219\" width=\"10\" height=\"83\" fill=\"#e8f4fc\"/><rect x=\"436\" y=\"218\" width=\"10\" height=\"72\" fill=\"#9cc9ea\"/><rect x=\"446\" y=\"218\" width=\"8\" height=\"99\" fill=\"#e8f4fc\"/><rect x=\"462\" y=\"217\" width=\"9\" height=\"92\" fill=\"#e8f4fc\"/><rect x=\"473\" y=\"216\" width=\"10\" height=\"100\" fill=\"#e8f4fc\"/><rect x=\"488\" y=\"216\" width=\"7\" height=\"99\" fill=\"#b9dcf2\"/><rect x=\"505\" y=\"215\" width=\"11\" height=\"79\" fill=\"#e8f4fc\"/><rect x=\"517\" y=\"214\" width=\"6\" height=\"102\" fill=\"#e8f4fc\"/><rect x=\"531\" y=\"213\" width=\"10\" height=\"103\" fill=\"#9cc9ea\"/><rect x=\"549\" y=\"213\" width=\"6\" height=\"105\" fill=\"#b9dcf2\"/><rect x=\"562\" y=\"212\" width=\"12\" height=\"97\" fill=\"#b9dcf2\"/><rect x=\"573\" y=\"211\" width=\"8\" height=\"85\" fill=\"#9cc9ea\"/><rect x=\"589\" y=\"211\" width=\"8\" height=\"91\" fill=\"#e8f4fc\"/><rect x=\"602\" y=\"210\" width=\"11\" height=\"85\" fill=\"#e8f4fc\"/><rect x=\"618\" y=\"209\" width=\"11\" height=\"95\" fill=\"#e8f4fc\"/><rect x=\"627\" y=\"209\" width=\"8\" height=\"90\" fill=\"#c7e3f5\"/><rect x=\"644\" y=\"208\" width=\"7\" height=\"85\" fill=\"#e8f4fc\"/><rect x=\"656\" y=\"207\" width=\"7\" height=\"70\" fill=\"#c7e3f5\"/><rect x=\"671\" y=\"206\" width=\"9\" height=\"89\" fill=\"#9cc9ea\"/><rect x=\"687\" y=\"206\" width=\"7\" height=\"89\" fill=\"#e8f4fc\"/><rect x=\"699\" y=\"205\" width=\"10\" height=\"105\" fill=\"#e8f4fc\"/><rect x=\"711\" y=\"204\" width=\"7\" height=\"75\" fill=\"#9cc9ea\"/><rect x=\"727\" y=\"204\" width=\"8\" height=\"99\" fill=\"#e8f4fc\"/><rect x=\"745\" y=\"203\" width=\"11\" height=\"97\" fill=\"#b9dcf2\"/><rect x=\"758\" y=\"202\" width=\"8\" height=\"81\" fill=\"#e8f4fc\"/><rect x=\"772\" y=\"201\" width=\"10\" height=\"71\" fill=\"#9cc9ea\"/><rect x=\"785\" y=\"201\" width=\"7\" height=\"71\" fill=\"#9cc9ea\"/><rect x=\"795\" y=\"200\" width=\"9\" height=\"82\" fill=\"#e8f4fc\"/><rect x=\"814\" y=\"199\" width=\"11\" height=\"76\" fill=\"#9cc9ea\"/><rect x=\"824\" y=\"199\" width=\"6\" height=\"78\" fill=\"#b9dcf2\"/><path d=\"M0 330 L800 315 L800 380 L0 390Z\" fill=\"#26527a\"/><path d=\"M0 385 L800 372 L800 500 L0 500Z\" fill=\"#8a7a5c\"/><ellipse cx=\"81\" cy=\"409\" rx=\"18\" ry=\"7\" fill=\"#6e6149\"/><ellipse cx=\"349\" cy=\"417\" rx=\"6\" ry=\"4\" fill=\"#6e6149\"/><ellipse cx=\"277\" cy=\"468\" rx=\"16\" ry=\"3\" fill=\"#6e6149\"/><ellipse cx=\"655\" cy=\"441\" rx=\"6\" ry=\"4\" fill=\"#6e6149\"/><ellipse cx=\"329\" cy=\"441\" rx=\"17\" ry=\"3\" fill=\"#6e6149\"/><ellipse cx=\"664\" cy=\"462\" rx=\"12\" ry=\"7\" fill=\"#6e6149\"/><ellipse cx=\"695\" cy=\"443\" rx=\"8\" ry=\"3\" fill=\"#6e6149\"/><ellipse cx=\"424\" cy=\"405\" rx=\"7\" ry=\"8\" fill=\"#6e6149\"/><ellipse cx=\"627\" cy=\"442\" rx=\"18\" ry=\"6\" fill=\"#6e6149\"/><ellipse cx=\"612\" cy=\"451\" rx=\"10\" ry=\"6\" fill=\"#6e6149\"/><ellipse cx=\"13\" cy=\"403\" rx=\"11\" ry=\"7\" fill=\"#6e6149\"/><ellipse cx=\"669\" cy=\"440\" rx=\"6\" ry=\"6\" fill=\"#6e6149\"/><ellipse cx=\"628\" cy=\"490\" rx=\"17\" ry=\"5\" fill=\"#6e6149\"/><ellipse cx=\"160\" cy=\"411\" rx=\"6\" ry=\"4\" fill=\"#6e6149\"/><ellipse cx=\"215\" cy=\"418\" rx=\"14\" ry=\"3\" fill=\"#6e6149\"/><ellipse cx=\"366\" cy=\"446\" rx=\"12\" ry=\"5\" fill=\"#6e6149\"/><ellipse cx=\"551\" cy=\"487\" rx=\"15\" ry=\"7\" fill=\"#6e6149\"/><ellipse cx=\"157\" cy=\"484\" rx=\"15\" ry=\"7\" fill=\"#6e6149\"/><ellipse cx=\"338\" cy=\"429\" rx=\"17\" ry=\"7\" fill=\"#6e6149\"/><ellipse cx=\"264\" cy=\"461\" rx=\"18\" ry=\"3\" fill=\"#6e6149\"/><ellipse cx=\"794\" cy=\"482\" rx=\"10\" ry=\"8\" fill=\"#6e6149\"/><ellipse cx=\"791\" cy=\"470\" rx=\"17\" ry=\"6\" fill=\"#6e6149\"/><ellipse cx=\"572\" cy=\"435\" rx=\"11\" ry=\"7\" fill=\"#6e6149\"/><ellipse cx=\"542\" cy=\"435\" rx=\"8\" ry=\"5\" fill=\"#6e6149\"/><ellipse cx=\"9\" cy=\"471\" rx=\"13\" ry=\"3\" fill=\"#6e6149\"/><ellipse cx=\"671\" cy=\"446\" rx=\"8\" ry=\"8\" fill=\"#6e6149\"/><ellipse cx=\"233\" cy=\"451\" rx=\"18\" ry=\"3\" fill=\"#6e6149\"/><ellipse cx=\"28\" cy=\"479\" rx=\"8\" ry=\"3\" fill=\"#6e6149\"/><ellipse cx=\"61\" cy=\"469\" rx=\"14\" ry=\"4\" fill=\"#6e6149\"/><ellipse cx=\"568\" cy=\"423\" rx=\"10\" ry=\"7\" fill=\"#6e6149\"/></svg>", "7": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s7__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#3b7fc4\"/><stop offset=\"1\" stop-color=\"#d7e9f7\"/></linearGradient><linearGradient id=\"l7__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#3fd1c2\"/><stop offset=\"1\" stop-color=\"#138f86\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s7__U__)\"/><path d=\"M60 330 L330 60 L470 150 L560 110 L760 330Z\" fill=\"#5d5a57\"/><path d=\"M230 160 L330 60 L400 110 L430 170 L380 150 L350 190 L310 150 L270 185Z\" fill=\"#fff\"/><path d=\"M510 150 L560 110 L620 170 L590 165 L560 185 L535 160Z\" fill=\"#fff\"/><path d=\"M0 330 L800 330 L800 500 L0 500Z\" fill=\"#7a6f5e\"/><ellipse cx=\"400\" cy=\"370\" rx=\"330\" ry=\"55\" fill=\"url(#l7__U__)\"/><path d=\"M0 420 Q200 390 400 430 T800 410 L800 500 L0 500Z\" fill=\"#6d7a4a\"/><circle cx=\"120\" cy=\"428\" r=\"3\" fill=\"#1c7ed6\"/><circle cx=\"129\" cy=\"426\" r=\"3\" fill=\"#f59f00\"/><circle cx=\"138\" cy=\"425\" r=\"3\" fill=\"#d9480f\"/><circle cx=\"147\" cy=\"424\" r=\"3\" fill=\"#d9480f\"/><circle cx=\"156\" cy=\"422\" r=\"3\" fill=\"#f59f00\"/><circle cx=\"165\" cy=\"420\" r=\"3\" fill=\"#d9480f\"/></svg>", "8": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s8__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f6a04d\"/><stop offset=\"1\" stop-color=\"#fde2b0\"/></linearGradient><linearGradient id=\"d8__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#e7b46a\"/><stop offset=\"1\" stop-color=\"#c98a3f\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s8__U__)\"/><circle cx=\"620\" cy=\"120\" r=\"45\" fill=\"#fff4d6\"/><path d=\"M0 260 Q180 90 380 230 Q520 110 800 220 L800 500 L0 500Z\" fill=\"url(#d8__U__)\"/><path d=\"M0 330 Q300 200 520 320 Q660 250 800 300 L800 500 L0 500Z\" fill=\"#dca458\"/><ellipse cx=\"400\" cy=\"400\" rx=\"190\" ry=\"40\" fill=\"#3c8f6e\"/><ellipse cx=\"400\" cy=\"398\" rx=\"170\" ry=\"30\" fill=\"#4fae86\"/><path d=\"M220 400 Q224 360 222 330\" stroke=\"#6b4a2a\" stroke-width=\"5\" fill=\"none\"/><path d=\"M222 330 q-14 -6 -28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M222 330 q14 -6 28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M222 330 q-10 4 -20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M222 330 q10 4 20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M260 400 Q264 360 262 330\" stroke=\"#6b4a2a\" stroke-width=\"5\" fill=\"none\"/><path d=\"M262 330 q-14 -6 -28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M262 330 q14 -6 28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M262 330 q-10 4 -20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M262 330 q10 4 20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M540 400 Q544 360 542 330\" stroke=\"#6b4a2a\" stroke-width=\"5\" fill=\"none\"/><path d=\"M542 330 q-14 -6 -28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M542 330 q14 -6 28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M542 330 q-10 4 -20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M542 330 q10 4 20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M580 400 Q584 360 582 330\" stroke=\"#6b4a2a\" stroke-width=\"5\" fill=\"none\"/><path d=\"M582 330 q-14 -6 -28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M582 330 q14 -6 28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M582 330 q-10 4 -20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M582 330 q10 4 20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M610 400 Q614 360 612 330\" stroke=\"#6b4a2a\" stroke-width=\"5\" fill=\"none\"/><path d=\"M612 330 q-14 -6 -28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M612 330 q14 -6 28 9\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M612 330 q-10 4 -20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M612 330 q10 4 20 19\" stroke=\"#2f7a3a\" stroke-width=\"6\" fill=\"none\" stroke-linecap=\"round\"/><rect x=\"0\" y=\"430\" width=\"800\" height=\"70\" fill=\"#d69a4c\"/><rect x=\"150\" y=\"428\" width=\"44\" height=\"16\" rx=\"3\" fill=\"#8a6a45\"/><rect x=\"148\" y=\"424\" width=\"48\" height=\"4\" fill=\"#caa06a\"/><rect x=\"310\" y=\"428\" width=\"44\" height=\"16\" rx=\"3\" fill=\"#8a6a45\"/><rect x=\"308\" y=\"424\" width=\"48\" height=\"4\" fill=\"#caa06a\"/><rect x=\"470\" y=\"428\" width=\"44\" height=\"16\" rx=\"3\" fill=\"#8a6a45\"/><rect x=\"468\" y=\"424\" width=\"48\" height=\"4\" fill=\"#caa06a\"/><rect x=\"650\" y=\"428\" width=\"44\" height=\"16\" rx=\"3\" fill=\"#8a6a45\"/><rect x=\"648\" y=\"424\" width=\"48\" height=\"4\" fill=\"#caa06a\"/></svg>", "9": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s9__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#9fbfd6\"/><stop offset=\"1\" stop-color=\"#e3edf3\"/></linearGradient><linearGradient id=\"o9__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#2b6c96\"/><stop offset=\"1\" stop-color=\"#123e5c\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s9__U__)\"/><path d=\"M0 220 L800 220 L800 500 L0 500Z\" fill=\"url(#o9__U__)\"/><path d=\"M90 225 L220 150 L330 175 L420 120 L560 180 L680 225Z\" fill=\"#8a7d6a\"/><path d=\"M220 150 L330 175 L420 120 L500 150 L400 160 L320 190Z\" fill=\"#efe9dc\"/><path d=\"M60 420 Q140 300 330 320 Q470 300 560 380 L620 440 L40 450Z\" fill=\"#6b5c4a\"/><path d=\"M150 330 Q300 300 420 320 L400 340 Q280 320 170 350Z\" fill=\"#e8e0d0\"/><g transform=\"translate(120 400) scale(1.1 1.1)\"><path d=\"M0 0 C10 -18 40 -22 58 -10 C66 -5 70 5 66 10 L-4 12 Z\" fill=\"#5a3b24\"/><path d=\"M52 -12 C58 -30 70 -34 76 -26 C80 -20 72 -14 64 -8Z\" fill=\"#6b4630\"/><circle cx=\"72\" cy=\"-26\" r=\"1.5\" fill=\"#111\"/></g><g transform=\"translate(220 380) scale(-0.9 0.9)\"><path d=\"M0 0 C10 -18 40 -22 58 -10 C66 -5 70 5 66 10 L-4 12 Z\" fill=\"#5a3b24\"/><path d=\"M52 -12 C58 -30 70 -34 76 -26 C80 -20 72 -14 64 -8Z\" fill=\"#6b4630\"/><circle cx=\"72\" cy=\"-26\" r=\"1.5\" fill=\"#111\"/></g><g transform=\"translate(300 395) scale(1.2 1.2)\"><path d=\"M0 0 C10 -18 40 -22 58 -10 C66 -5 70 5 66 10 L-4 12 Z\" fill=\"#5a3b24\"/><path d=\"M52 -12 C58 -30 70 -34 76 -26 C80 -20 72 -14 64 -8Z\" fill=\"#6b4630\"/><circle cx=\"72\" cy=\"-26\" r=\"1.5\" fill=\"#111\"/></g><g transform=\"translate(420 380) scale(0.8 0.8)\"><path d=\"M0 0 C10 -18 40 -22 58 -10 C66 -5 70 5 66 10 L-4 12 Z\" fill=\"#5a3b24\"/><path d=\"M52 -12 C58 -30 70 -34 76 -26 C80 -20 72 -14 64 -8Z\" fill=\"#6b4630\"/><circle cx=\"72\" cy=\"-26\" r=\"1.5\" fill=\"#111\"/></g><g transform=\"translate(480 410) scale(-1 1)\"><path d=\"M0 0 C10 -18 40 -22 58 -10 C66 -5 70 5 66 10 L-4 12 Z\" fill=\"#5a3b24\"/><path d=\"M52 -12 C58 -30 70 -34 76 -26 C80 -20 72 -14 64 -8Z\" fill=\"#6b4630\"/><circle cx=\"72\" cy=\"-26\" r=\"1.5\" fill=\"#111\"/></g><g transform=\"translate(200 425) scale(0.9 0.9)\"><path d=\"M0 0 C10 -18 40 -22 58 -10 C66 -5 70 5 66 10 L-4 12 Z\" fill=\"#5a3b24\"/><path d=\"M52 -12 C58 -30 70 -34 76 -26 C80 -20 72 -14 64 -8Z\" fill=\"#6b4630\"/><circle cx=\"72\" cy=\"-26\" r=\"1.5\" fill=\"#111\"/></g><g transform=\"translate(360 420) scale(1 1)\"><path d=\"M0 0 C10 -18 40 -22 58 -10 C66 -5 70 5 66 10 L-4 12 Z\" fill=\"#5a3b24\"/><path d=\"M52 -12 C58 -30 70 -34 76 -26 C80 -20 72 -14 64 -8Z\" fill=\"#6b4630\"/><circle cx=\"72\" cy=\"-26\" r=\"1.5\" fill=\"#111\"/></g><path d=\"M541 247 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M359 439 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M726 302 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M452 460 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M510 294 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M651 473 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M352 470 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M398 357 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M217 322 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M27 267 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M675 427 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M15 256 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M660 473 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M411 412 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M359 255 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M233 384 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M385 344 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M384 481 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M672 400 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M229 247 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M257 245 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M268 421 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M444 301 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M236 330 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M208 323 q15 -6 30 0\" stroke=\"#5b95bd\" stroke-width=\"2\" fill=\"none\"/><path d=\"M620 300 L740 300 L720 322 L632 322Z\" fill=\"#f2f2f2\"/><rect x=\"660\" y=\"282\" width=\"40\" height=\"18\" fill=\"#d9480f\"/></svg>", "10": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 800 500\" preserveAspectRatio=\"xMidYMid slice\" width=\"100%\" height=\"100%\"><defs><linearGradient id=\"s10__U__\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#c9d3db\"/><stop offset=\"1\" stop-color=\"#eef2f5\"/></linearGradient></defs><rect width=\"800\" height=\"500\" fill=\"url(#s10__U__)\"/><rect x=\"0\" y=\"210\" width=\"260\" height=\"170\" fill=\"#e8b84a\"/><rect x=\"540\" y=\"210\" width=\"260\" height=\"170\" fill=\"#e8b84a\"/><rect x=\"15\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"12\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"20\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"65\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"62\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"70\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"115\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"112\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"120\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"165\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"162\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"170\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"215\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"212\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"220\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"555\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"552\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"560\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"605\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"602\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"610\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"655\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"652\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"660\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"705\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"702\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"710\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"755\" y=\"235\" width=\"34\" height=\"40\" fill=\"#5a3a22\"/><rect x=\"752\" y=\"275\" width=\"40\" height=\"6\" fill=\"#4a2e1a\"/><rect x=\"760\" y=\"310\" width=\"24\" height=\"60\" rx=\"12\" fill=\"#3d2a1c\"/><rect x=\"300\" y=\"170\" width=\"200\" height=\"210\" fill=\"#e6d3b3\"/><path d=\"M300 170 L400 120 L500 170Z\" fill=\"#d8c29d\"/><rect x=\"255\" y=\"90\" width=\"70\" height=\"290\" fill=\"#e2cda8\"/><rect x=\"270\" y=\"110\" width=\"40\" height=\"40\" rx=\"20\" fill=\"#5a4630\"/><rect x=\"270\" y=\"175\" width=\"40\" height=\"46\" rx=\"20\" fill=\"#5a4630\"/><path d=\"M255 90 L290 45 L325 90Z\" fill=\"#bfa77e\"/><rect x=\"288\" y=\"30\" width=\"4\" height=\"18\" fill=\"#6b5536\"/><rect x=\"475\" y=\"90\" width=\"70\" height=\"290\" fill=\"#e2cda8\"/><rect x=\"490\" y=\"110\" width=\"40\" height=\"40\" rx=\"20\" fill=\"#5a4630\"/><rect x=\"490\" y=\"175\" width=\"40\" height=\"46\" rx=\"20\" fill=\"#5a4630\"/><path d=\"M475 90 L510 45 L545 90Z\" fill=\"#bfa77e\"/><rect x=\"508\" y=\"30\" width=\"4\" height=\"18\" fill=\"#6b5536\"/><path d=\"M370 380 L370 290 Q400 255 430 290 L430 380Z\" fill=\"#4a3620\"/><rect x=\"0\" y=\"380\" width=\"800\" height=\"120\" fill=\"#b9b1a4\"/><ellipse cx=\"400\" cy=\"440\" rx=\"90\" ry=\"18\" fill=\"#8d8579\"/><rect x=\"392\" y=\"395\" width=\"16\" height=\"45\" fill=\"#6b645a\"/><ellipse cx=\"400\" cy=\"395\" rx=\"30\" ry=\"8\" fill=\"#6b645a\"/><path d=\"M120 470 Q124 420 122 380\" stroke=\"#6b4a2a\" stroke-width=\"6\" fill=\"none\"/><path d=\"M122 380 q-16 -7 -32 11\" stroke=\"#2f7a3a\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M122 380 q16 -7 32 11\" stroke=\"#2f7a3a\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M122 380 q-12 5 -24 23\" stroke=\"#2f7a3a\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M122 380 q12 5 24 23\" stroke=\"#2f7a3a\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M680 470 Q684 420 682 380\" stroke=\"#6b4a2a\" stroke-width=\"6\" fill=\"none\"/><path d=\"M682 380 q-16 -7 -32 11\" stroke=\"#2f7a3a\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M682 380 q16 -7 32 11\" stroke=\"#2f7a3a\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M682 380 q-12 5 -24 23\" stroke=\"#2f7a3a\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M682 380 q12 5 24 23\" stroke=\"#2f7a3a\" stroke-width=\"7\" fill=\"none\" stroke-linecap=\"round\"/></svg>"};
+        let sceneCounter = 0;
+        function sceneSVG(day) {
+            const raw = SCENES[String(day)];
+            if (!raw) return '';
+            const uid = '_' + (++sceneCounter);
+            return raw.replace(/__U__/g, uid);
+        }
+
+        // ===== FOTOS POR PASSEIO =====
+        // Cada dia tem uma lista própria de fontes, todas ligadas ao local exato do passeio.
+        // Ordem: (1) arquivo verificado no Wikimedia Commons; (2) foto principal do artigo da Wikipedia do local;
+        // (3) busca no Commons pelo nome do local. Se nada carregar, aparece um painel com o nome do local
+        // (nunca uma foto aleatória).
+        const photoCache = {};
+        const PHOTO_BAD = /(map|mapa|locator|location|locali|flag|bandera|logo|escudo|coat_of_arms|diagram|plan\b|\.svg|\.png|\.gif|\.tif)/i;
+
+        function commonsFileURL(name) {
+            return 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(name.replace(/ /g, '_')) + '?width=1200';
+        }
+
+        async function wikiLeadImage(lang, title) {
+            const url = `https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*&redirects=1&prop=pageimages&piprop=thumbnail%7Cname&pithumbsize=1200&titles=${encodeURIComponent(title)}`;
+            try {
+                const r = await fetch(url);
+                const j = await r.json();
+                const pages = Object.values((j.query && j.query.pages) || {});
+                const p = pages.find(x => x.thumbnail && x.pageimage);
+                if (p && /\.jpe?g$/i.test(p.pageimage) && !PHOTO_BAD.test(p.pageimage)) return p.thumbnail.source;
+            } catch (e) {}
+            return null;
+        }
+
+        async function commonsSearch(query) {
+            const url = `https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch=${encodeURIComponent(query + ' filetype:bitmap')}&prop=imageinfo&iiprop=url%7Cmime&iiurlwidth=1200`;
+            try {
+                const r = await fetch(url);
+                const j = await r.json();
+                const pages = Object.values((j.query && j.query.pages) || {}).sort((a, b) => (a.index || 0) - (b.index || 0));
+                return pages
+                    .filter(p => p.imageinfo && p.imageinfo[0] && p.imageinfo[0].mime === 'image/jpeg' && !PHOTO_BAD.test(p.title))
+                    .map(p => p.imageinfo[0].thumburl || p.imageinfo[0].url)
+                    .slice(0, 3);
+            } catch (e) { return []; }
+        }
+
+        async function extraCandidates(src) {
+            const lists = await Promise.all([
+                ...(src.wiki || []).map(([l, t]) => wikiLeadImage(l, t)),
+                commonsSearch(src.commons || ''),
+                ...(src.wikiLast || []).map(([l, t]) => wikiLeadImage(l, t))
+            ]);
+            return lists.flat().filter(Boolean);
+        }
+
+        function photoFallbackHTML(item) {
+            return `<div class="photo-fallback scene-bg absolute inset-0" role="img" aria-label="${item.imgCaption}">${sceneSVG(item.day)}</div>`;
+        }
+
+        function attachDayPhoto(img, item) {
+            if (!img) return;
+            img.style.opacity = '0';
+            img.style.transition = 'opacity .4s ease';
+            const src = item.imgSources || {};
+            const show = () => { img.style.opacity = '1'; photoCache[item.day] = img.src; };
+            img.addEventListener('load', show);
+
+            if (photoCache[item.day]) { img.src = photoCache[item.day]; return; }
+
+            const queue = (src.files || []).map(commonsFileURL);
+            let extrasLoaded = false;
+            const tryNext = async () => {
+                if (!queue.length && !extrasLoaded) {
+                    extrasLoaded = true;
+                    queue.push(...await extraCandidates(src));
+                }
+                if (!queue.length) { img.style.display = 'none'; return; }
+                img.src = queue.shift();
+            };
+            img.addEventListener('error', tryNext);
+            tryNext();
+        }
+
+
+        function updatePrepProgress() {
+            const all = document.querySelectorAll('.prep-check');
+            const done = [...all].filter(c => c.checked).length;
+            document.getElementById('prep-progress-label').innerText = `${done} de ${all.length}`;
+            document.getElementById('prep-progress-bar').style.width = `${all.length ? (done / all.length * 100) : 0}%`;
+        }
+
+        // GLOBAL APP STATE
+        let currentGroupSize = 3;
+        let currentCurrency = "BRL";
+        let altitudeChartInstance = null;
+        let budgetChartInstance = null;
+
+        // INITIALIZATION ON DOM LOAD
+        document.addEventListener("DOMContentLoaded", () => {
+            renderItinerary('all');
+            initAltitudeChart();
+            initBudgetChart();
+            renderBudgetTable();
+            updateBudgetCalculator();
+        });
+
+        function switchTab(tabId) {
+            const tabs = ['itinerary', 'dashboard', 'budget', 'feasibility', 'guide'];
+            tabs.forEach(t => {
+                const sec = document.getElementById(`tab-${t}`);
+                const btn = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    sec.classList.remove('hidden');
+                    if (btn) {
+                        btn.classList.remove('text-stone-300', 'hover:bg-stone-800');
+                        btn.classList.add('bg-amber-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    }
+                } else {
+                    sec.classList.add('hidden');
+                    if (btn) {
+                        btn.classList.add('text-stone-300', 'hover:bg-stone-800');
+                        btn.classList.remove('bg-amber-600', 'text-white', 'shadow-sm', 'font-semibold');
+                    }
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function scrollToDay(dayNum) {
+            switchTab('itinerary');
+            setTimeout(() => {
+                const el = document.getElementById(`day-card-${dayNum}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('ring-4', 'ring-amber-500');
+                    setTimeout(() => el.classList.remove('ring-4', 'ring-amber-500'), 2500);
+                }
+            }, 100);
+        }
+
+        function renderItinerary(filter = 'all', search = '') {
+            const container = document.getElementById('itinerary-cards-container');
+            container.innerHTML = '';
+
+            const filtered = itineraryData.filter(item => {
+                const matchesFilter = filter === 'all' || item.region === filter;
+                const matchesSearch = search === '' || 
+                    item.title.toLowerCase().includes(search.toLowerCase()) || 
+                    item.hub.toLowerCase().includes(search.toLowerCase()) ||
+                    item.category.toLowerCase().includes(search.toLowerCase());
+                return matchesFilter && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-8 rounded-xl border border-stone-200 text-center text-stone-500">
+                        <i class="fa-solid fa-compass text-3xl mb-2 text-stone-400"></i>
+                        <p>Nenhuma atividade encontrada com o termo pesquisado.</p>
+                    </div>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.id = `day-card-${item.day}`;
+                card.className = "bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col md:flex-row";
+                
+                card.innerHTML = `
+                    <div class="md:w-5/12 relative min-h-[220px] bg-stone-200 overflow-hidden group">
+                        ${photoFallbackHTML(item)}
+                        <img data-day="${item.day}" alt="${item.imgCaption}" class="day-photo absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent md:hidden"></div>
+                        <div class="absolute top-3 left-3 bg-stone-900/90 backdrop-blur-sm text-white px-3 py-1 rounded-lg text-xs font-extrabold shadow-md">
+                            DIA ${item.day} • ${item.date.split(' ')[0]}
+                        </div>
+                        <div class="absolute bottom-3 left-3 bg-amber-600 text-white px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider shadow">
+                            ${item.category}
+                        </div>
+                    </div>
+                    <div class="p-6 md:w-7/12 flex flex-col justify-between space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between text-xs text-stone-500 mb-1.5 flex-wrap gap-2">
+                                <span class="font-semibold text-stone-700"><i class="fa-solid fa-location-dot text-amber-600 mr-1.5"></i>${item.hub}</span>
+                                <span class="bg-teal-50 text-teal-800 px-2 py-0.5 rounded font-bold border border-teal-200"><i class="fa-solid fa-mountain mr-1 text-teal-600"></i>${item.altitude}</span>
+                            </div>
+                            <h3 class="text-xl font-bold text-stone-900 leading-snug">${item.title}</h3>
+                            <p class="text-xs text-stone-500 italic mt-1">${item.imgCaption}</p>
+                            <p class="text-xs text-stone-600 mt-3 line-clamp-2 leading-relaxed">${item.timeline[0]?.desc || ''}</p>
+                        </div>
+
+                        <div class="bg-stone-50 p-3.5 rounded-xl border border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div>
+                                <span class="text-stone-500 block text-[11px]">Custo Estimado por Pessoa:</span>
+                                <span class="font-bold text-amber-700 text-sm">R$ ${item.costPersonBRL.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="text-xs font-normal text-stone-500">(S/ ${item.costPersonPEN.toLocaleString('pt-BR')})</span></span>
+                            </div>
+                            <button onclick="openDayDetail(${item.day})" class="px-4 py-2 bg-stone-900 text-white font-bold rounded-lg hover:bg-amber-600 transition-colors flex items-center justify-center space-x-2 shadow-sm">
+                                <span>Ver Detalhes do Dia</span>
+                                <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                attachDayPhoto(card.querySelector('img.day-photo'), item);
+            });
+        }
+
+        function filterItinerary(region) {
+            ['all', 'cusco', 'mountain', 'coast'].forEach(r => {
+                const btn = document.getElementById(`btn-filter-${r}`);
+                if (r === region) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-amber-600 text-white shadow-sm";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all bg-stone-100 text-stone-600 hover:bg-stone-200";
+                }
+            });
+            renderItinerary(region, document.getElementById('itinerary-search').value);
+        }
+
+        function searchItinerary() {
+            const query = document.getElementById('itinerary-search').value;
+            renderItinerary('all', query);
+        }
+
+        function openDayDetail(dayNum) {
+            const dayData = itineraryData.find(d => d.day === dayNum);
+            if (!dayData) return;
+
+            document.getElementById('modal-day-badge').innerText = `DIA ${dayData.day} • ${dayData.date}`;
+            document.getElementById('modal-title').innerText = dayData.title;
+
+            let timelineHTML = dayData.timeline.map(t => `
+                <div class="flex space-x-3 text-xs border-b border-stone-100 pb-2 last:border-0 last:pb-0">
+                    <span class="font-extrabold text-amber-700 w-28 shrink-0">${t.time}</span>
+                    <span class="text-stone-700 leading-relaxed">${t.desc}</span>
+                </div>
+            `).join('');
+
+            document.getElementById('modal-body').innerHTML = `
+                <div class="rounded-xl overflow-hidden h-60 bg-stone-100 mb-2 relative group shadow-inner">
+                    ${photoFallbackHTML(dayData)}
+                    <img data-day="${dayData.day}" class="day-photo absolute inset-0 w-full h-full object-cover" alt="${dayData.imgCaption}">
+                    <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 text-white text-xs">
+                        <i class="fa-solid fa-camera mr-1.5 text-amber-400"></i> ${dayData.imgCaption}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 bg-stone-50 p-3.5 rounded-xl border border-stone-200 text-xs">
+                    <div><strong class="text-stone-500 block">Hub Operacional:</strong> <span class="font-bold text-stone-900">${dayData.hub}</span></div>
+                    <div><strong class="text-stone-500 block">Altitude Fisiológica:</strong> <span class="font-bold text-teal-700">${dayData.altitude}</span></div>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-stone-900 text-sm mb-2 flex items-center">
+                        <i class="fa-regular fa-clock text-amber-600 mr-2"></i>Cronograma Hora a Hora:
+                    </h4>
+                    <div class="space-y-2 bg-stone-50 p-4 rounded-xl border border-stone-200">
+                        ${timelineHTML}
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-xs space-y-1">
+                    <span class="font-bold text-amber-900 block flex items-center">
+                        <i class="fa-solid fa-users-slash mr-1.5 text-amber-700"></i>Melhor Horário para Menor Aglomeração:
+                    </span>
+                    <p class="text-amber-800 leading-relaxed">${dayData.quietHours}</p>
+                </div>
+
+                <div class="bg-stone-50 p-3.5 rounded-xl border border-stone-200 text-xs space-y-1">
+                    <span class="font-bold text-stone-800 block flex items-center">
+                        <i class="fa-solid fa-van-shuttle mr-1.5 text-stone-600"></i>Logística de Transporte & Método:
+                    </span>
+                    <p class="text-stone-600 leading-relaxed">${dayData.logistics}</p>
+                </div>
+
+                <div class="bg-emerald-50 border border-emerald-200 p-3.5 rounded-xl text-xs space-y-1">
+                    <span class="font-bold text-emerald-900 block flex items-center">
+                        <i class="fa-solid fa-receipt mr-1.5 text-emerald-700"></i>Detalhamento dos Custos Individuais:
+                    </span>
+                    <p class="text-emerald-800 font-medium">${dayData.costsDetail}</p>
+                </div>
+            `;
+
+            attachDayPhoto(document.querySelector('#modal-body img.day-photo'), dayData);
+            document.getElementById('day-modal').classList.remove('hidden');
+        }
+
+        function closeDayModal() {
+            document.getElementById('day-modal').classList.add('hidden');
+        }
+
+        function initAltitudeChart() {
+            const ctx = document.getElementById('altitudeChart').getContext('2d');
+            const labels = ['Dia 1 (CUZ)', 'Dia 2 (SAC)', 'Dia 3 (VALE)', 'Dia 4 (AGU)', 'Dia 5 (MP)', 'Dia 6 (QUE)', 'Dia 7 (HUM)', 'Dia 8 (ICA)', 'Dia 9 (LIM)', 'Dia 10 (LIM)'];
+            const dataPts = [3399, 3700, 2870, 2040, 2430, 5400, 4200, 0, 0, 0];
+
+            altitudeChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Altitude (Metros)',
+                        data: dataPts,
+                        borderColor: '#d97706',
+                        backgroundColor: 'rgba(217, 119, 6, 0.15)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#b45309'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Altitude: ${context.raw} m`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Metros acima do nível do mar (m)', font: { size: 10 } },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function initBudgetChart() {
+            const ctx = document.getElementById('budgetChart').getContext('2d');
+            budgetChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Aéreos (32.3%)', 'Passeios & Vans (20.7%)', 'Hospedagem (17.9%)', 'Ingressos & Trem (16.3%)', 'Alimentação (12.8%)'],
+                    datasets: [{
+                        data: [3242.40, 2073.28, 1793.60, 1634.00, 1281.36],
+                        backgroundColor: [
+                            '#d97706', // Inca Gold
+                            '#0d9488', // Teal
+                            '#334155', // Slate
+                            '#e11d48', // Rose
+                            '#84cc16'  // Lime
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { size: 10 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` R$ ${Number(context.raw).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} por pessoa`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function changeGroupSize(delta) {
+            currentGroupSize = Math.max(1, Math.min(20, currentGroupSize + delta));
+            document.getElementById('group-size-val').innerText = currentGroupSize;
+            document.getElementById('calc-group-label').innerText = currentGroupSize;
+            updateBudgetCalculator();
+        }
+
+        function updateCurrencyView() {
+            currentCurrency = document.getElementById('currency-select').value;
+            updateBudgetCalculator();
+        }
+
+        const FX = { PEN_BRL: 1.52, USD_BRL: 5.12 };
+        const fmt2 = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        function updateBudgetCalculator() {
+            const baseBRL = budgetCategories.reduce((a, c) => a + c.brlVal, 0);
+            const basePEN = budgetCategories.reduce((a, c) => a + c.penVal, 0);
+            const baseUSD = baseBRL / FX.USD_BRL;
+            const view = {
+                BRL: { symbol: 'R$', val: baseBRL },
+                PEN: { symbol: 'S/', val: basePEN },
+                USD: { symbol: 'US$', val: baseUSD }
+            }[currentCurrency] || { symbol: 'R$', val: baseBRL };
+
+            document.getElementById('calc-indiv-total').innerText = `${view.symbol} ${fmt2(view.val)}`;
+            document.getElementById('calc-group-total').innerText = `${view.symbol} ${fmt2(view.val * currentGroupSize)}`;
+            document.getElementById('dash-total-brl').innerText = `R$ ${baseBRL.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+
+            renderBudgetTable();
+        }
+
+        function renderBudgetTable() {
+            const tbody = document.getElementById('budget-table-body');
+            tbody.innerHTML = '';
+            let tBRL = 0, tPEN = 0;
+
+            budgetCategories.forEach(cat => {
+                const usd = cat.brlVal / FX.USD_BRL;
+                tBRL += cat.brlVal; tPEN += cat.penVal;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="py-3 px-6 font-bold text-stone-900">${cat.item}</td>
+                    <td class="py-3 px-6 text-stone-600">${cat.desc}</td>
+                    <td class="py-3 px-6 text-right font-medium text-stone-500 whitespace-nowrap">${cat.localVal}</td>
+                    <td class="py-3 px-6 text-right font-medium text-sky-800 whitespace-nowrap">US$ ${fmt2(usd)}</td>
+                    <td class="py-3 px-6 text-right font-bold text-amber-700 whitespace-nowrap">R$ ${fmt2(cat.brlVal)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('budget-table-foot').innerHTML = `
+                <tr>
+                    <td class="py-3 px-6" colspan="2">Total por pessoa</td>
+                    <td class="py-3 px-6 text-right whitespace-nowrap">≈ S/ ${fmt2(tPEN)}</td>
+                    <td class="py-3 px-6 text-right text-sky-800 whitespace-nowrap">US$ ${fmt2(tBRL / FX.USD_BRL)}</td>
+                    <td class="py-3 px-6 text-right text-amber-700 whitespace-nowrap">R$ ${fmt2(tBRL)}</td>
+                </tr>`;
+        }
+    </script>
+</body>
+</html>
